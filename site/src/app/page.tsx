@@ -3,6 +3,7 @@ import EditorialNav from "@/components/ui/EditorialNav";
 import ScrollHero from "@/components/home/ScrollHero";
 import BrandStatement from "@/components/home/BrandStatement";
 import CompoundIndex from "@/components/home/CompoundIndex";
+import HomepageSections from "@/components/home/HomepageSections";
 import VerificationTeaser from "@/components/home/VerificationTeaser";
 import JournalTeaser from "@/components/home/JournalTeaser";
 import Footer from "@/components/ui/Footer";
@@ -16,6 +17,7 @@ export default function Home() {
         <ScrollHero />
         <BrandStatement />
         <CompoundIndex />
+        <HomepageSections />
         <VerificationTeaser />
         <JournalTeaser />
       </main>

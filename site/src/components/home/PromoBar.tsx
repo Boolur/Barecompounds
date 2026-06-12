@@ -1,14 +1,14 @@
 import MarqueeTicker from "@/components/ui/MarqueeTicker";
 
 const PROMO_ITEMS = [
-  { text: "Complimentary US shipping over $150" },
-  { text: "Code BARE15 — 15% off first order", tone: "accent" as const },
-  { text: "New · Retatrutide now live" },
+  { text: "Free local pickup available" },
+  { text: "Minimum delivery order: updates coming soon", tone: "accent" as const },
+  { text: "Use code: launch offers coming soon" },
   { text: "Third-party verified · 99% purity", tone: "muted" as const },
   { text: "For research use only", tone: "muted" as const },
-  { text: "Complimentary US shipping over $150" },
-  { text: "Batch COAs published weekly", tone: "accent" as const },
-  { text: "New · Retatrutide now live" },
+  { text: "New products available" },
+  { text: "Pickup by appointment only", tone: "accent" as const },
+  { text: "Government ID required for pickup" },
 ];
 
 export default function PromoBar() {

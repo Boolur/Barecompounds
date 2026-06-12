@@ -6,10 +6,12 @@ import Wordmark from "./Wordmark";
 import { cn } from "@/lib/cn";
 
 const NAV_ITEMS = [
-  { index: "01", label: "Compounds", href: "/compounds" },
-  { index: "02", label: "Research", href: "/journal" },
-  { index: "03", label: "Verification", href: "/coa" },
-  { index: "04", label: "Journal", href: "/journal" },
+  { index: "01", label: "Home", href: "/" },
+  { index: "02", label: "Shop", href: "/shop" },
+  { index: "03", label: "Featured", href: "/featured-products" },
+  { index: "04", label: "Research", href: "/research" },
+  { index: "05", label: "Affiliate", href: "/affiliate-program" },
+  { index: "06", label: "Support", href: "/help-support" },
 ] as const;
 
 export default function EditorialNav() {
@@ -38,7 +40,7 @@ export default function EditorialNav() {
         {/* Desktop nav */}
         <nav
           aria-label="Primary"
-          className="hidden md:flex items-center justify-center gap-10"
+          className="hidden lg:flex items-center justify-center gap-7"
         >
           {NAV_ITEMS.map((item) => (
             <Link
@@ -104,7 +106,7 @@ export default function EditorialNav() {
             aria-expanded={open}
             aria-controls="mobile-nav"
             onClick={() => setOpen((v) => !v)}
-            className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-full border border-[var(--bare-rule-strong)]"
+            className="lg:hidden inline-flex items-center justify-center h-9 w-9 rounded-full border border-[var(--bare-rule-strong)]"
           >
             <span className="sr-only">Menu</span>
             <svg width="14" height="10" viewBox="0 0 14 10" aria-hidden>
@@ -123,7 +125,7 @@ export default function EditorialNav() {
       <div
         id="mobile-nav"
         className={cn(
-          "md:hidden overflow-hidden border-t border-[var(--bare-rule)] transition-[max-height] duration-500 ease-[var(--ease-editorial)]",
+          "lg:hidden overflow-hidden border-t border-[var(--bare-rule)] transition-[max-height] duration-500 ease-[var(--ease-editorial)]",
           open ? "max-h-[60vh]" : "max-h-0"
         )}
       >

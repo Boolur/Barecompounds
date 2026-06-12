@@ -6,33 +6,38 @@ const COLUMNS = [
   {
     eyebrow: "Index",
     links: [
-      { label: "All compounds", href: "/compounds" },
-      { label: "New arrivals", href: "/compounds#new" },
-      { label: "Packs", href: "/compounds#packs" },
+      { label: "Shop", href: "/shop" },
+      { label: "Featured products", href: "/featured-products" },
+      { label: "Best sellers", href: "/best-sellers" },
+      { label: "Product categories", href: "/shop#categories" },
     ],
   },
   {
-    eyebrow: "Verification",
+    eyebrow: "Support",
     links: [
-      { label: "COA archive", href: "/coa" },
-      { label: "Third-party labs", href: "/coa#labs" },
+      { label: "Help & support", href: "/help-support" },
+      { label: "Schedule pickup", href: "/help-support#pickup" },
+      { label: "Schedule call", href: "/affiliate-program#schedule" },
       { label: "Order tracking", href: "/track" },
     ],
   },
   {
     eyebrow: "Bare",
     links: [
-      { label: "Journal", href: "/journal" },
-      { label: "Contact", href: "/contact" },
-      { label: "Trade enquiries", href: "/trade" },
+      { label: "Research", href: "/research" },
+      { label: "Affiliate program", href: "/affiliate-program" },
+      { label: "Researcher account", href: "/account" },
+      { label: "COA archive", href: "/coa" },
     ],
   },
   {
     eyebrow: "Legal",
     links: [
-      { label: "Terms", href: "/terms" },
-      { label: "Privacy", href: "/privacy" },
-      { label: "Research disclaimer", href: "/disclaimer" },
+      { label: "Terms & Conditions", href: "/terms" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Shipping Policy", href: "/shipping-policy" },
+      { label: "Return Policy", href: "/return-policy" },
+      { label: "Research Use Disclaimer", href: "/research-use-disclaimer" },
     ],
   },
 ];
@@ -51,7 +56,10 @@ export default function Footer() {
               by batch.
             </p>
             <p className="caption max-w-[36ch]">
-              Portland · Los Angeles · Made in the USA
+              Email · Phone · Store address to be added before launch
+            </p>
+            <p className="caption max-w-[36ch]">
+              Mon-Fri 9:00 AM - 5:00 PM · Sat 11:00 AM - 3:00 PM · Sun closed
             </p>
           </div>
 

@@ -1,0 +1,27 @@
+import MarketingPage from "@/components/ui/MarketingPage";
+import ProductGrid from "@/components/ProductGrid";
+import { BEST_SELLERS } from "@/lib/compounds";
+
+export const metadata = { title: "Best Sellers" };
+
+export default function BestSellersPage() {
+  return (
+    <MarketingPage
+      index="§ 04"
+      eyebrow="Best Sellers"
+      title={
+        <>
+          Best
+          <br />
+          <span className="italic font-[280]" style={{ fontVariationSettings: '"opsz" 144, "SOFT" 80' }}>
+            sellers.
+          </span>
+        </>
+      }
+      description="Launch best sellers are statically curated for now. Sales-based sorting will be driven by order data after checkout and admin reporting are implemented."
+      primaryCta={{ label: "Shop all products", href: "/shop" }}
+    >
+      <ProductGrid products={BEST_SELLERS} />
+    </MarketingPage>
+  );
+}

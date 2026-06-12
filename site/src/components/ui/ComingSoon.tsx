@@ -39,8 +39,8 @@ export default function ComingSoon({
                 <Button href="/" variant="ink">
                   Return home
                 </Button>
-                <Button href="/compounds" variant="ghost">
-                  Browse compounds
+                <Button href="/shop" variant="ghost">
+                  Browse shop
                 </Button>
               </div>
             </div>

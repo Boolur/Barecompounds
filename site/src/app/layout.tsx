@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import SmoothScroll from "@/components/SmoothScroll";
+import AgeGate from "@/components/AgeGate";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -60,7 +60,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col grain bg-cream text-ink">
-        <SmoothScroll />
+        <AgeGate />
         {children}
       </body>
     </html>
