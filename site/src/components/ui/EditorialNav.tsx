@@ -26,7 +26,7 @@ export default function EditorialNav() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 bg-[#f7f6f3]/92 backdrop-blur-md transition-[border-color,background-color] duration-500 ease-[var(--ease-editorial)]",
+        "sticky top-9 z-40 bg-[#f7f6f3]/92 backdrop-blur-md transition-[border-color,background-color] duration-500 ease-[var(--ease-editorial)]",
         scrolled
           ? "border-b border-[var(--bare-rule)] shadow-[0_8px_30px_rgba(10,10,10,0.04)]"
           : "border-b border-transparent"

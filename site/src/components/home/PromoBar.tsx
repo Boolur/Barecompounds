@@ -12,5 +12,11 @@ const PROMO_ITEMS = [
 ];
 
 export default function PromoBar() {
-  return <MarqueeTicker items={PROMO_ITEMS} speed={55} />;
+  return (
+    <MarqueeTicker
+      items={PROMO_ITEMS}
+      speed={55}
+      className="sticky top-0 z-50 flex h-9 items-center"
+    />
+  );
 }
