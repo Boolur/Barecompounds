@@ -41,6 +41,7 @@ Create a Vercel project from `https://github.com/Boolur/Barecompounds.git` with 
 - Output directory: leave as the Vercel default for Next.js
 
 No `vercel.json` is required for the current setup because Vercel supports setting `site` as the project root in the dashboard.
+Once connected, Vercel should create a new deployment for each push to the `main` branch.
 
 ## Supabase Environment
 
