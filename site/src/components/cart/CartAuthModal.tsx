@@ -12,6 +12,40 @@ type Props = {
   onAuthenticated: (user: User) => void;
 };
 
+function ModalModeToggle({
+  mode,
+  setMode,
+}: {
+  mode: Mode;
+  setMode: (mode: Mode) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 rounded-full border border-[var(--bare-rule)] bg-paper p-1">
+      {[
+        ["sign-in", "Sign in"],
+        ["sign-up", "Create account"],
+      ].map(([value, label]) => {
+        const active = mode === value;
+        return (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setMode(value as Mode)}
+            aria-pressed={active}
+            className={`nav-link rounded-full px-4 py-3 transition-all duration-300 ${
+              active
+                ? "bg-ink text-cream shadow-[0_8px_20px_rgba(10,10,10,0.14)]"
+                : "text-smoke hover:bg-cream hover:text-ink"
+            }`}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function CartAuthModal({ open, onAuthenticated, onClose }: Props) {
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
@@ -65,7 +99,9 @@ export default function CartAuthModal({ open, onAuthenticated, onClose }: Props)
           <div>
             <p className="eyebrow">Researcher account required</p>
             <h2 id="cart-auth-title" className="display-s mt-6">
-              Sign in before adding products.
+              {mode === "sign-in"
+                ? "Sign in before adding products."
+                : "Create an account to continue."}
             </h2>
           </div>
           <button
@@ -75,6 +111,16 @@ export default function CartAuthModal({ open, onAuthenticated, onClose }: Props)
           >
             Close
           </button>
+        </div>
+
+        <div className="mt-8">
+          <ModalModeToggle
+            mode={mode}
+            setMode={(nextMode) => {
+              setMode(nextMode);
+              setMessage("");
+            }}
+          />
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 grid grid-cols-1 gap-5">
@@ -112,16 +158,11 @@ export default function CartAuthModal({ open, onAuthenticated, onClose }: Props)
                   ? "Sign in"
                   : "Create account"}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode(mode === "sign-in" ? "sign-up" : "sign-in");
-                setMessage("");
-              }}
-              className="nav-link text-ink"
-            >
-              {mode === "sign-in" ? "Create account" : "Sign in instead"}
-            </button>
+            <span className="caption">
+              {mode === "sign-in"
+                ? "Use your researcher account to shop."
+                : "Already have an account? Switch to sign in above."}
+            </span>
           </div>
         </form>
 

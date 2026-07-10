@@ -8,6 +8,40 @@ import type { Database } from "@/lib/supabase/database.types";
 type Mode = "sign-in" | "sign-up";
 type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 
+function AuthModeToggle({
+  mode,
+  setMode,
+}: {
+  mode: Mode;
+  setMode: (mode: Mode) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 rounded-full border border-[var(--bare-rule)] bg-cream p-1">
+      {[
+        ["sign-in", "Sign in"],
+        ["sign-up", "Create account"],
+      ].map(([value, label]) => {
+        const active = mode === value;
+        return (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setMode(value as Mode)}
+            aria-pressed={active}
+            className={`nav-link rounded-full px-4 py-3 transition-all duration-300 ${
+              active
+                ? "bg-ink text-cream shadow-[0_8px_20px_rgba(10,10,10,0.14)]"
+                : "text-smoke hover:bg-paper hover:text-ink"
+            }`}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function AccountAuth() {
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
@@ -150,7 +184,20 @@ export default function AccountAuth() {
         onSubmit={handleSubmit}
         className="border border-[var(--bare-rule)] bg-paper p-8 md:col-span-7 md:p-10"
       >
-        <p className="eyebrow">{mode === "sign-in" ? "Sign in" : "Create account"}</p>
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <p className="eyebrow">
+            {mode === "sign-in" ? "Welcome back" : "Researcher access"}
+          </p>
+          <div className="w-full sm:w-[360px]">
+            <AuthModeToggle
+              mode={mode}
+              setMode={(nextMode) => {
+                setMode(nextMode);
+                setMessage("");
+              }}
+            />
+          </div>
+        </div>
         <div className="mt-8 grid grid-cols-1 gap-5">
           <label className="flex flex-col gap-2">
             <span className="eyebrow">Email</span>
@@ -186,10 +233,13 @@ export default function AccountAuth() {
 
       <aside className="md:col-span-5">
         <div className="border border-[var(--bare-rule)] bg-cream p-8 md:p-10">
-          <p className="eyebrow">Researcher access</p>
+          <p className="eyebrow">
+            {mode === "sign-in" ? "Need access?" : "Already approved?"}
+          </p>
           <p className="lede mt-6">
-            Use Supabase Auth for login now. Profile details, addresses, and
-            order history are ready for the next account dashboard pass.
+            {mode === "sign-in"
+              ? "Create a researcher account to shop, submit checkout, and build order history."
+              : "Return to sign in if you already have a Bare Compounds researcher account."}
           </p>
           <button
             type="button"
@@ -197,11 +247,11 @@ export default function AccountAuth() {
               setMode(mode === "sign-in" ? "sign-up" : "sign-in");
               setMessage("");
             }}
-            className="nav-link mt-8 text-ink"
+            className="nav-link mt-8 inline-flex rounded-full border border-[var(--bare-rule-strong)] px-5 py-3 text-ink transition-colors hover:bg-ink hover:text-cream"
           >
             {mode === "sign-in"
-              ? "Need an account? Create one"
-              : "Already have an account? Sign in"}
+              ? "Create account"
+              : "Sign in instead"}
           </button>
         </div>
       </aside>
