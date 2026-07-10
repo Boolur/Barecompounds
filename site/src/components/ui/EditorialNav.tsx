@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Wordmark from "./Wordmark";
+import CartBadge from "@/components/cart/CartBadge";
 import { cn } from "@/lib/cn";
 
 const NAV_ITEMS = [
@@ -101,7 +102,7 @@ export default function EditorialNav() {
           </Link>
           <Link
             href="/cart"
-            aria-label="Cart, 0 items"
+            aria-label="Cart"
             className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-white"
           >
             <svg
@@ -119,12 +120,7 @@ export default function EditorialNav() {
               <circle cx="7.5" cy="15.5" r="1" />
               <circle cx="14" cy="15.5" r="1" />
             </svg>
-            <span
-              className="absolute right-1 top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-ink px-1 text-[0.6rem] font-bold leading-none text-cream tabular-nums"
-              aria-hidden
-            >
-              0
-            </span>
+            <CartBadge />
           </Link>
           <Link
             href="/shop"

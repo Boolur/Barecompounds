@@ -151,6 +151,60 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["orders"]["Insert"]>;
         Relationships: [];
       };
+      order_items: {
+        Row: {
+          id: string;
+          order_id: string;
+          product_variant_id: string | null;
+          product_name: string;
+          sku: string | null;
+          batch_number: string | null;
+          quantity: number;
+          unit_price_cents: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          product_variant_id?: string | null;
+          product_name: string;
+          sku?: string | null;
+          batch_number?: string | null;
+          quantity: number;
+          unit_price_cents?: number;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["order_items"]["Insert"]>;
+        Relationships: [];
+      };
+      payments: {
+        Row: {
+          id: string;
+          order_id: string;
+          method: PaymentMethod;
+          status: PaymentStatus;
+          amount_cents: number;
+          transaction_reference: string | null;
+          verified_by: string | null;
+          verified_at: string | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          method: PaymentMethod;
+          status: PaymentStatus;
+          amount_cents?: number;
+          transaction_reference?: string | null;
+          verified_by?: string | null;
+          verified_at?: string | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["payments"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

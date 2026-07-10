@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import AgeGate from "@/components/AgeGate";
+import { CartProvider } from "@/components/cart/CartProvider";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -60,8 +61,10 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col grain bg-cream text-ink">
-        <AgeGate />
-        {children}
+        <CartProvider>
+          <AgeGate />
+          {children}
+        </CartProvider>
       </body>
     </html>
   );

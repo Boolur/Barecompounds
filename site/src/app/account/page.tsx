@@ -1,4 +1,5 @@
 import MarketingPage from "@/components/ui/MarketingPage";
+import AccountAuth from "./AccountAuth";
 
 export const metadata = { title: "Account" };
 
@@ -36,6 +37,10 @@ export default function AccountPage() {
           body: "Research disclaimer, terms acceptance, and age verification history.",
         },
       ]}
-    />
+    >
+      <section className="container-bare pb-24 md:pb-32">
+        <AccountAuth />
+      </section>
+    </MarketingPage>
   );
 }

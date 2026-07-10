@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import AddToCartButton from "@/components/cart/AddToCartButton";
 import { cn } from "@/lib/cn";
 
 export type Compound = {
@@ -21,8 +22,7 @@ type Props = {
 
 export default function ProductIndexRow({ item, className }: Props) {
   return (
-    <Link
-      href={`/compounds/${item.slug}`}
+    <article
       className={cn(
         "group relative block border-t border-[var(--bare-rule)] transition-colors duration-500",
         "hover:bg-paper",
@@ -40,12 +40,12 @@ export default function ProductIndexRow({ item, className }: Props) {
         className="absolute left-0 bottom-0 h-px w-0 bg-[var(--tint)] transition-[width] duration-[900ms] ease-[var(--ease-editorial)] group-hover:w-full"
       />
 
-      <div className="container-bare grid grid-cols-[3rem_1fr_auto] md:grid-cols-[4rem_1.5fr_2fr_auto_auto] items-baseline gap-6 py-8 md:py-10">
+      <div className="container-bare grid grid-cols-[3rem_1fr] items-center gap-6 py-8 md:grid-cols-[4rem_1.5fr_2fr_auto_auto] md:py-10">
         <span className="font-mono text-[0.75rem] text-taupe tabular-nums">
           {item.index}
         </span>
 
-        <span className="flex flex-col gap-1">
+        <Link href={`/compounds/${item.slug}`} className="flex flex-col gap-1">
           <span
             className="font-serif text-[clamp(1.75rem,3.5vw,3rem)] leading-[0.95] tracking-[-0.02em] font-[360] transition-transform duration-500 ease-[var(--ease-editorial)] group-hover:translate-x-2"
             style={{ fontVariationSettings: '"opsz" 96' }}
@@ -53,7 +53,7 @@ export default function ProductIndexRow({ item, className }: Props) {
             {item.name}
           </span>
           <span className="caption md:hidden">{item.subtitle}</span>
-        </span>
+        </Link>
 
         <span className="hidden md:block lede text-smoke max-w-[40ch]">
           {item.subtitle}
@@ -63,8 +63,9 @@ export default function ProductIndexRow({ item, className }: Props) {
           {item.molecularWeight}
         </span>
 
-        <span className="flex items-center gap-4 justify-end">
+        <span className="col-span-2 flex items-center justify-between gap-4 md:col-span-1 md:justify-end">
           <span className="caption tabular-nums">{item.mg}</span>
+          <AddToCartButton item={item} />
           <span
             className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--bare-rule-strong)] transition-colors duration-500 group-hover:bg-ink group-hover:text-cream group-hover:border-ink"
             aria-hidden
@@ -79,6 +80,6 @@ export default function ProductIndexRow({ item, className }: Props) {
           </span>
         </span>
       </div>
-    </Link>
+    </article>
   );
 }

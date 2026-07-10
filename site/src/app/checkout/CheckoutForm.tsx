@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { submitCheckout, type CheckoutState } from "./actions";
+import { useCart } from "@/components/cart/CartProvider";
 
 const INITIAL_STATE: CheckoutState = {
   ok: false,
@@ -12,6 +13,7 @@ export default function CheckoutForm() {
   const [state, action, pending] = useActionState(submitCheckout, INITIAL_STATE);
   const [fulfillmentMethod, setFulfillmentMethod] = useState("local_pickup");
   const [paymentMethod, setPaymentMethod] = useState("zelle");
+  const { clearCart, itemCount, items } = useCart();
 
   const paymentHelp = useMemo(() => {
     if (paymentMethod === "cash") {
@@ -23,8 +25,15 @@ export default function CheckoutForm() {
     return "Zelle orders stay Pending Payment until manually verified by admin.";
   }, [paymentMethod]);
 
+  useEffect(() => {
+    if (state.ok && state.orderNumber) {
+      clearCart();
+    }
+  }, [clearCart, state.ok, state.orderNumber]);
+
   return (
     <form action={action} className="grid grid-cols-1 gap-8 md:grid-cols-12">
+      <input type="hidden" name="cartItems" value={JSON.stringify(items)} />
       <div className="md:col-span-7 space-y-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="flex flex-col gap-2">
@@ -96,6 +105,24 @@ export default function CheckoutForm() {
       <aside className="md:col-span-5">
         <div className="sticky top-28 border border-[var(--bare-rule)] bg-paper p-6">
           <p className="eyebrow">Launch order flow</p>
+          <div className="mt-6 border-y border-[var(--bare-rule)] py-5">
+            <div className="flex items-baseline justify-between">
+              <span className="caption">Cart items</span>
+              <span className="font-mono text-sm">{itemCount}</span>
+            </div>
+            <ul className="mt-4 space-y-3">
+              {items.length > 0 ? (
+                items.map((item) => (
+                  <li key={item.slug} className="flex items-baseline justify-between gap-4 text-sm">
+                    <span>{item.name}</span>
+                    <span className="font-mono">x{item.quantity}</span>
+                  </li>
+                ))
+              ) : (
+                <li className="caption">Add products from the shop before submitting.</li>
+              )}
+            </ul>
+          </div>
           <ul className="mt-6 space-y-4 text-sm text-smoke">
             <li>Order submitted</li>
             <li>Payment pending or cash due at pickup</li>
