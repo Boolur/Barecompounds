@@ -1,32 +1,26 @@
 import Link from "next/link";
-import HairlineRule from "@/components/ui/HairlineRule";
 import ProductIndexRow from "@/components/ui/ProductIndexRow";
 import { COMPOUNDS } from "@/lib/compounds";
 
 const PREVIEW_COUNT = 8;
+const UPDATED_LABEL = "July 2026";
 
 export default function CompoundIndex() {
   const previewProducts = COMPOUNDS.slice(0, PREVIEW_COUNT);
 
   return (
-    <section id="compounds" className="bg-cream">
-      <div className="container-bare py-20 md:py-28">
-        <HairlineRule index="§ 02" label="Shop preview" />
+    <section id="compounds" className="bg-[#f8f7f4]">
+      <div className="container-bare py-12 text-center md:py-14">
+        <span className="inline-flex rounded-full bg-[#ece9e3] px-4 py-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.28em] text-[#8b8176]">
+          Popular Products
+        </span>
 
-        <div className="mt-12 md:mt-16 grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 items-end">
-          <h2 className="md:col-span-7 display-l">
-            Research-grade peptides.
-            <br />
-            <span
-              className="italic font-[290]"
-              style={{ fontVariationSettings: '"opsz" 144, "SOFT" 80' }}
-            >
-              Alphabetized.
-            </span>
+        <div className="mx-auto mt-7 max-w-3xl">
+          <h2 className="font-serif text-[clamp(2.6rem,5vw,4.8rem)] font-[330] leading-none tracking-[-0.05em] text-ink">
+            Research-Grade Peptides
           </h2>
-          <p className="md:col-span-4 md:col-start-9 lede">
-            The first rows of products sit directly below the introduction so
-            researchers can begin shopping without hunting through the site.
+          <p className="mx-auto mt-3 max-w-[34ch] text-lg leading-7 text-smoke">
+            High purity. Lab tested. COA included.
           </p>
         </div>
       </div>
@@ -39,11 +33,7 @@ export default function CompoundIndex() {
 
       <div className="container-bare py-12 md:py-16 flex flex-col md:flex-row items-baseline justify-between gap-6">
         <span className="caption font-mono tabular-nums">
-          {PREVIEW_COUNT} of {COMPOUNDS.length} products · updated{" "}
-          {new Date().toLocaleDateString("en-US", {
-            month: "long",
-            year: "numeric",
-          })}
+          {PREVIEW_COUNT} of {COMPOUNDS.length} products · updated {UPDATED_LABEL}
         </span>
         <Link
           href="/shop"

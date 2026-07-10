@@ -1,10 +1,12 @@
 import MarketingPage from "@/components/ui/MarketingPage";
 import ProductGrid from "@/components/ProductGrid";
-import { FEATURED_COMPOUNDS } from "@/lib/compounds";
+import { getFeaturedProducts } from "@/lib/commerce";
 
 export const metadata = { title: "Featured Products" };
 
-export default function FeaturedProductsPage() {
+export default async function FeaturedProductsPage() {
+  const products = await getFeaturedProducts();
+
   return (
     <MarketingPage
       index="§ 03"
@@ -21,7 +23,7 @@ export default function FeaturedProductsPage() {
       description="A manually curated product set for launch. Admin-managed featured product selection will be added when the Supabase backend comes online."
       primaryCta={{ label: "Shop all products", href: "/shop" }}
     >
-      <ProductGrid products={FEATURED_COMPOUNDS} />
+      <ProductGrid products={products} />
     </MarketingPage>
   );
 }

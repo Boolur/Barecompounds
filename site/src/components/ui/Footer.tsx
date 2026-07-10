@@ -84,7 +84,7 @@ export default function Footer() {
 
         <div className="mt-24 grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-baseline gap-6 border-t border-[var(--bare-rule)] pt-8">
           <p className="caption font-mono tabular-nums">
-            © {new Date().getFullYear()} BARE COMPOUNDS, LLC
+            © 2026 BARE COMPOUNDS, LLC
           </p>
 
           <p className="eyebrow text-center">

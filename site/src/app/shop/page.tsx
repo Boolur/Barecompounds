@@ -1,10 +1,13 @@
 import MarketingPage from "@/components/ui/MarketingPage";
 import ProductGrid from "@/components/ProductGrid";
-import { COMPOUNDS, PRODUCT_CATEGORIES } from "@/lib/compounds";
+import { PRODUCT_CATEGORIES } from "@/lib/compounds";
+import { getShopProducts } from "@/lib/commerce";
 
 export const metadata = { title: "Shop" };
 
-export default function ShopPage() {
+export default async function ShopPage() {
+  const products = await getShopProducts();
+
   return (
     <MarketingPage
       index="§ 02"
@@ -22,7 +25,7 @@ export default function ShopPage() {
       primaryCta={{ label: "View categories", href: "#categories" }}
       secondaryCta={{ label: "Best sellers", href: "/best-sellers" }}
     >
-      <ProductGrid products={COMPOUNDS} />
+      <ProductGrid products={products} />
       <section id="categories" className="container-bare py-20 md:py-28">
         <div className="grid grid-cols-1 gap-px bg-[var(--bare-rule)] md:grid-cols-2 xl:grid-cols-3">
           {PRODUCT_CATEGORIES.map((category) => (
