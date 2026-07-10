@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import type { Database } from "@/lib/supabase/database.types";
 
 type Mode = "sign-in" | "sign-up";
+type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 
 export default function AccountAuth() {
   const [mode, setMode] = useState<Mode>("sign-in");
@@ -13,6 +15,7 @@ export default function AccountAuth() {
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [orders, setOrders] = useState<OrderRow[]>([]);
   const supabase = createBrowserSupabaseClient();
 
   useEffect(() => {
@@ -25,6 +28,20 @@ export default function AccountAuth() {
 
     return () => listener.subscription.unsubscribe();
   }, [supabase]);
+
+  useEffect(() => {
+    if (!supabase || !user) {
+      setOrders([]);
+      return;
+    }
+
+    supabase
+      .from("orders")
+      .select("*")
+      .eq("profile_id", user.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setOrders(data ?? []));
+  }, [supabase, user]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,20 +81,65 @@ export default function AccountAuth() {
 
   if (user) {
     return (
-      <div className="border border-[var(--bare-rule)] bg-paper p-8 md:p-10">
-        <p className="eyebrow">Signed in</p>
-        <h2 className="display-s mt-8">{user.email}</h2>
-        <p className="lede mt-6">
-          Researcher profile, saved addresses, order history, and quick reorder
-          will attach to this Supabase user account.
-        </p>
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="nav-link mt-8 rounded-full border border-[var(--bare-rule-strong)] px-6 py-3"
-        >
-          Sign out
-        </button>
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
+        <section className="border border-[var(--bare-rule)] bg-paper p-8 md:col-span-5 md:p-10">
+          <p className="eyebrow">Signed in</p>
+          <h2 className="display-s mt-8">{user.email}</h2>
+          <p className="lede mt-6">
+            Researcher profile, saved addresses, order history, and quick
+            reorder attach to this Supabase account as the backend matures.
+          </p>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="nav-link mt-8 rounded-full border border-[var(--bare-rule-strong)] px-6 py-3"
+          >
+            Sign out
+          </button>
+        </section>
+
+        <section className="md:col-span-7">
+          <div className="grid grid-cols-1 gap-px bg-[var(--bare-rule)] sm:grid-cols-3">
+            {[
+              ["Profile", user.email ?? "Email pending"],
+              ["Addresses", "Billing + shipping next"],
+              ["Quick reorder", "Saved orders ready"],
+            ].map(([label, value]) => (
+              <article key={label} className="bg-paper p-6">
+                <p className="eyebrow">{label}</p>
+                <p className="mt-6 font-serif text-2xl tracking-[-0.02em]">
+                  {value}
+                </p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-8 border border-[var(--bare-rule)] bg-cream p-6">
+            <p className="eyebrow">Order history</p>
+            {orders.length > 0 ? (
+              <ul className="mt-6 divide-y divide-[var(--bare-rule)]">
+                {orders.map((order) => (
+                  <li
+                    key={order.id}
+                    className="flex flex-col gap-2 py-4 md:flex-row md:items-baseline md:justify-between"
+                  >
+                    <span className="font-mono text-sm">
+                      {order.order_number}
+                    </span>
+                    <span className="caption">
+                      {order.payment_status} · {order.fulfillment_status}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="lede mt-6">
+                No account-linked orders yet. Guest checkout orders can be
+                attached to accounts in a later admin workflow.
+              </p>
+            )}
+          </div>
+        </section>
       </div>
     );
   }

@@ -1,4 +1,5 @@
 import MarketingPage from "@/components/ui/MarketingPage";
+import AffiliateInquiryForm from "./AffiliateInquiryForm";
 
 export const metadata = { title: "Affiliate Program" };
 
@@ -24,6 +25,28 @@ export default function AffiliateProgramPage() {
       ]}
       primaryCta={{ label: "Apply soon", href: "#apply" }}
       secondaryCta={{ label: "Schedule a call", href: "#schedule" }}
-    />
+    >
+      <section className="container-bare py-20 md:py-28">
+        <AffiliateInquiryForm />
+      </section>
+
+      <section className="container-bare pb-24 md:pb-32">
+        <div className="grid grid-cols-1 gap-px bg-[var(--bare-rule)] md:grid-cols-4">
+          {[
+            ["Promo code", "Assigned after approval"],
+            ["Orders generated", "Tracked by referral"],
+            ["Commission earned", "Calculated manually first"],
+            ["Payout status", "Pending · Approved · Paid"],
+          ].map(([label, value]) => (
+            <article key={label} className="bg-cream p-8">
+              <p className="eyebrow">{label}</p>
+              <p className="mt-8 font-serif text-2xl tracking-[-0.02em]">
+                {value}
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
+    </MarketingPage>
   );
 }

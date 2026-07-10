@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { submitCheckout, type CheckoutState } from "./actions";
 import { useCart } from "@/components/cart/CartProvider";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 const INITIAL_STATE: CheckoutState = {
   ok: false,
@@ -13,6 +14,7 @@ export default function CheckoutForm() {
   const [state, action, pending] = useActionState(submitCheckout, INITIAL_STATE);
   const [fulfillmentMethod, setFulfillmentMethod] = useState("local_pickup");
   const [paymentMethod, setPaymentMethod] = useState("zelle");
+  const [userId, setUserId] = useState("");
   const { clearCart, itemCount, items } = useCart();
 
   const paymentHelp = useMemo(() => {
@@ -31,9 +33,27 @@ export default function CheckoutForm() {
     }
   }, [clearCart, state.ok, state.orderNumber]);
 
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) return;
+
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? "");
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUserId(session?.user.id ?? "");
+      }
+    );
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
   return (
     <form action={action} className="grid grid-cols-1 gap-8 md:grid-cols-12">
       <input type="hidden" name="cartItems" value={JSON.stringify(items)} />
+      <input type="hidden" name="profileId" value={userId} />
       <div className="md:col-span-7 space-y-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="flex flex-col gap-2">
@@ -105,6 +125,11 @@ export default function CheckoutForm() {
       <aside className="md:col-span-5">
         <div className="sticky top-28 border border-[var(--bare-rule)] bg-paper p-6">
           <p className="eyebrow">Launch order flow</p>
+          {!userId ? (
+            <div className="mt-6 border border-[var(--bare-rule)] bg-cream p-4 text-sm text-smoke">
+              Sign in through the account page before submitting checkout.
+            </div>
+          ) : null}
           <div className="mt-6 border-y border-[var(--bare-rule)] py-5">
             <div className="flex items-baseline justify-between">
               <span className="caption">Cart items</span>
@@ -145,7 +170,7 @@ export default function CheckoutForm() {
 
           <button
             type="submit"
-            disabled={pending}
+            disabled={pending || !userId}
             className="nav-link mt-8 w-full rounded-full bg-ink px-6 py-3 text-cream disabled:opacity-50"
           >
             {pending ? "Submitting..." : "Submit pending order"}

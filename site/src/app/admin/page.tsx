@@ -1,31 +1,5 @@
 import MarketingPage from "@/components/ui/MarketingPage";
-
-const ADMIN_AREAS = [
-  {
-    label: "Orders",
-    body: "Order number, customer, order total, payment status, fulfillment status, tracking number, and store location.",
-  },
-  {
-    label: "Payments",
-    body: "Cash, Zelle, and Venmo verification queue with transaction reference and date payment received.",
-  },
-  {
-    label: "Inventory",
-    body: "Store Location 1, Store Location 2, batch number, remaining quantity, and low-stock alerts.",
-  },
-  {
-    label: "Pickup",
-    body: "Awaiting scheduling, scheduled, ready for pickup, completed, and no-show workflows.",
-  },
-  {
-    label: "Shipping",
-    body: "Manual tracking number entry, carrier, estimated delivery date, and shipping confirmation status.",
-  },
-  {
-    label: "Affiliates",
-    body: "Promo code usage, referral orders, sales generated, commission earned, and payout status.",
-  },
-];
+import { getAdminSummary } from "@/lib/admin";
 
 const PAYMENT_FLOW = [
   "Order Submitted",
@@ -38,7 +12,15 @@ const PAYMENT_FLOW = [
 
 export const metadata = { title: "Admin Dashboard" };
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const summary = await getAdminSummary();
+  const metrics = [
+    ["Orders", summary.orders],
+    ["Pending payments", summary.pendingPayments],
+    ["Cash pickup", summary.cashPickup],
+    ["Affiliate inquiries", summary.affiliateInquiries],
+  ];
+
   return (
     <MarketingPage
       index="§ A"
@@ -55,7 +37,7 @@ export default function AdminPage() {
           </span>
         </>
       }
-      description="Phase 2 admin shell for order management, payment verification, inventory by location, pickup scheduling, shipping, and affiliate reporting."
+      description="Phase 4 admin surface for order management, payment verification, inventory by location, pickup scheduling, shipping, and affiliate reporting."
       features={[
         {
           label: "Manual payment launch",
@@ -72,13 +54,47 @@ export default function AdminPage() {
       ]}
     >
       <section className="container-bare py-20 md:py-28">
-        <div className="grid grid-cols-1 gap-px bg-[var(--bare-rule)] md:grid-cols-2 xl:grid-cols-3">
-          {ADMIN_AREAS.map((area) => (
-            <article key={area.label} className="bg-paper p-8 md:p-10">
-              <p className="eyebrow">{area.label}</p>
-              <p className="lede mt-8">{area.body}</p>
+        <div className="grid grid-cols-1 gap-px bg-[var(--bare-rule)] md:grid-cols-4">
+          {metrics.map(([label, value]) => (
+            <article key={label} className="bg-paper p-8 md:p-10">
+              <p className="eyebrow">{label}</p>
+              <p className="mt-8 font-serif text-5xl tracking-[-0.04em]">
+                {value}
+              </p>
             </article>
           ))}
+        </div>
+        {!summary.connected ? (
+          <p className="caption mt-6">
+            Admin read policies are not public. Metrics will populate after
+            Supabase admin access is configured.
+          </p>
+        ) : null}
+      </section>
+
+      <section className="container-bare pb-20 md:pb-28">
+        <div className="border border-[var(--bare-rule)] bg-paper p-8 md:p-10">
+          <p className="eyebrow">Recent orders</p>
+          {summary.recentOrders.length > 0 ? (
+            <ul className="mt-8 divide-y divide-[var(--bare-rule)]">
+              {summary.recentOrders.map((order) => (
+                <li
+                  key={order.id}
+                  className="grid grid-cols-1 gap-3 py-5 md:grid-cols-[1fr_1fr_auto_auto]"
+                >
+                  <span className="font-mono text-sm">{order.order_number}</span>
+                  <span className="text-sm text-smoke">{order.customer_email}</span>
+                  <span className="caption">{order.payment_status}</span>
+                  <span className="caption">{order.fulfillment_status}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="lede mt-8">
+              No readable orders yet. Once checkout writes orders and admin read
+              policies are enabled, this list becomes the working queue.
+            </p>
+          )}
         </div>
       </section>
 

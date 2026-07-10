@@ -71,6 +71,7 @@ export async function submitCheckout(
   const acceptedResearch = formData.get("researchDisclaimerAccepted") === "on";
   const acceptedTerms = formData.get("termsAccepted") === "on";
   const ageVerified = formData.get("ageVerified") === "on";
+  const profileId = value(formData, "profileId");
   const cartItems = parseCartItems(formData);
 
   if (!customerName || !customerEmail) {
@@ -89,6 +90,13 @@ export async function submitCheckout(
     return {
       ok: false,
       message: "Research disclaimer, terms, and age verification must be accepted.",
+    };
+  }
+
+  if (!profileId) {
+    return {
+      ok: false,
+      message: "Please sign in before submitting checkout.",
     };
   }
 
@@ -113,6 +121,7 @@ export async function submitCheckout(
     .from("orders")
     .insert({
     order_number: orderNumber,
+    profile_id: profileId,
     customer_name: customerName,
     customer_email: customerEmail,
     customer_phone: customerPhone || null,

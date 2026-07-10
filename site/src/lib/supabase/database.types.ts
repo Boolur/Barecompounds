@@ -205,6 +205,34 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["payments"]["Insert"]>;
         Relationships: [];
       };
+      affiliate_inquiries: {
+        Row: {
+          id: string;
+          name: string;
+          email: string;
+          phone: string | null;
+          audience: string | null;
+          message: string | null;
+          status: string;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          email: string;
+          phone?: string | null;
+          audience?: string | null;
+          message?: string | null;
+          status?: string;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["affiliate_inquiries"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

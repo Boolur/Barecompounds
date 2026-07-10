@@ -3,7 +3,14 @@ import AccountAuth from "./AccountAuth";
 
 export const metadata = { title: "Account" };
 
-export default function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reason?: string; next?: string }>;
+}) {
+  const params = await searchParams;
+  const requiresLoginForCart = params.reason === "cart";
+
   return (
     <MarketingPage
       index="§ 07"
@@ -39,6 +46,15 @@ export default function AccountPage() {
       ]}
     >
       <section className="container-bare pb-24 md:pb-32">
+        {requiresLoginForCart ? (
+          <div className="mb-8 border border-[var(--bare-rule)] bg-paper p-6">
+            <p className="eyebrow">Account required</p>
+            <p className="lede mt-4">
+              Please sign in or create a researcher account before adding
+              products to your cart.
+            </p>
+          </div>
+        ) : null}
         <AccountAuth />
       </section>
     </MarketingPage>
