@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from "@/lib/supabase/client";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type AdminOrder = Pick<
@@ -30,7 +30,7 @@ export async function getAdminSummary(): Promise<AdminSummary> {
     connected: false,
   };
 
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   if (!supabase) return fallback;
 
   const [orders, pendingPayments, cashPickup, affiliateInquiries, recentOrders] =

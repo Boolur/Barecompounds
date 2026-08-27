@@ -1,6 +1,6 @@
 import type { Compound } from "@/components/ui/ProductIndexRow";
 import { BEST_SELLERS, COMPOUNDS, FEATURED_COMPOUNDS } from "@/lib/compounds";
-import { createServerSupabaseClient } from "@/lib/supabase/client";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 function mapProductRowToCompound(
   row: {
@@ -26,7 +26,7 @@ function mapProductRowToCompound(
 }
 
 export async function getShopProducts(): Promise<Compound[]> {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   if (!supabase) return COMPOUNDS;
 
   const { data, error } = await supabase
@@ -40,7 +40,7 @@ export async function getShopProducts(): Promise<Compound[]> {
 }
 
 export async function getFeaturedProducts(): Promise<Compound[]> {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   if (!supabase) return FEATURED_COMPOUNDS;
 
   const { data, error } = await supabase
@@ -55,7 +55,7 @@ export async function getFeaturedProducts(): Promise<Compound[]> {
 }
 
 export async function getBestSellers(): Promise<Compound[]> {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   if (!supabase) return BEST_SELLERS;
 
   const { data, error } = await supabase

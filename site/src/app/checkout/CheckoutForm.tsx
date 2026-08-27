@@ -10,11 +10,22 @@ const INITIAL_STATE: CheckoutState = {
   message: "",
 };
 
-export default function CheckoutForm() {
+type CheckoutLocation = {
+  id: string;
+  name: string;
+  address: string | null;
+};
+
+export default function CheckoutForm({
+  locations,
+}: {
+  locations: CheckoutLocation[];
+}) {
   const [state, action, pending] = useActionState(submitCheckout, INITIAL_STATE);
   const [fulfillmentMethod, setFulfillmentMethod] = useState("local_pickup");
   const [paymentMethod, setPaymentMethod] = useState("zelle");
   const [userId, setUserId] = useState("");
+  const [idempotencyKey, setIdempotencyKey] = useState("");
   const { clearCart, itemCount, items } = useCart();
 
   const paymentHelp = useMemo(() => {
@@ -26,6 +37,16 @@ export default function CheckoutForm() {
     }
     return "Zelle orders stay Pending Payment until manually verified by admin.";
   }, [paymentMethod]);
+
+  useEffect(() => {
+    setIdempotencyKey(crypto.randomUUID());
+  }, []);
+
+  useEffect(() => {
+    if (fulfillmentMethod === "shipping" && paymentMethod === "cash") {
+      setPaymentMethod("zelle");
+    }
+  }, [fulfillmentMethod, paymentMethod]);
 
   useEffect(() => {
     if (state.ok && state.orderNumber) {
@@ -53,7 +74,7 @@ export default function CheckoutForm() {
   return (
     <form action={action} className="grid grid-cols-1 gap-8 md:grid-cols-12">
       <input type="hidden" name="cartItems" value={JSON.stringify(items)} />
-      <input type="hidden" name="profileId" value={userId} />
+      <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
       <div className="md:col-span-7 space-y-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="flex flex-col gap-2">
@@ -91,6 +112,30 @@ export default function CheckoutForm() {
             ))}
           </div>
         </fieldset>
+
+        <label className="flex flex-col gap-2">
+          <span className="eyebrow">
+            {fulfillmentMethod === "local_pickup"
+              ? "Pickup location"
+              : "Fulfilling location"}
+          </span>
+          <select
+            name="storeLocationId"
+            required
+            defaultValue={locations[0]?.id ?? ""}
+            className="border border-[var(--bare-rule)] bg-paper px-4 py-3"
+          >
+            {locations.length === 0 ? (
+              <option value="">No active locations available</option>
+            ) : null}
+            {locations.map((location) => (
+              <option key={location.id} value={location.id}>
+                {location.name}
+                {location.address ? ` — ${location.address}` : ""}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <fieldset className="border border-[var(--bare-rule)] p-5">
           <legend className="eyebrow px-2">Payment</legend>
@@ -162,7 +207,7 @@ export default function CheckoutForm() {
               ["ageVerified", "I confirm I am 18 or older."],
             ].map(([name, label]) => (
               <label key={name} className="flex items-start gap-3 text-sm text-smoke">
-                <input name={name} type="checkbox" className="mt-1" />
+                <input name={name} type="checkbox" required className="mt-1" />
                 <span>{label}</span>
               </label>
             ))}
@@ -170,7 +215,9 @@ export default function CheckoutForm() {
 
           <button
             type="submit"
-            disabled={pending || !userId}
+            disabled={
+              pending || !userId || !idempotencyKey || locations.length === 0
+            }
             className="nav-link mt-8 w-full rounded-full bg-ink px-6 py-3 text-cream disabled:opacity-50"
           >
             {pending ? "Submitting..." : "Submit pending order"}
@@ -180,6 +227,11 @@ export default function CheckoutForm() {
             <div className={`mt-6 border p-4 text-sm ${state.ok ? "border-ink" : "border-red-900 text-red-900"}`}>
               <p>{state.message}</p>
               {state.orderNumber ? <p className="mt-2 font-mono">Order: {state.orderNumber}</p> : null}
+              {typeof state.totalCents === "number" ? (
+                <p className="mt-2 font-mono">
+                  Total: ${(state.totalCents / 100).toFixed(2)}
+                </p>
+              ) : null}
             </div>
           ) : null}
         </div>

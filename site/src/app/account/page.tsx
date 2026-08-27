@@ -10,6 +10,12 @@ export default async function AccountPage({
 }) {
   const params = await searchParams;
   const requiresLoginForCart = params.reason === "cart";
+  const requiresAuthentication = params.reason === "auth";
+  const accessDenied = params.reason === "forbidden";
+  const redirectTo =
+    params.next?.startsWith("/") && !params.next.startsWith("//")
+      ? params.next
+      : undefined;
 
   return (
     <MarketingPage
@@ -32,16 +38,21 @@ export default async function AccountPage({
       secondaryCta={{ label: "Track order", href: "/track" }}
     >
       <section className="container-bare pb-24 md:pb-32">
-        {requiresLoginForCart ? (
+        {requiresLoginForCart || requiresAuthentication || accessDenied ? (
           <div className="mb-8 border border-[var(--bare-rule)] bg-paper p-6">
-            <p className="eyebrow">Account required</p>
+            <p className="eyebrow">
+              {accessDenied ? "Staff access required" : "Account required"}
+            </p>
             <p className="lede mt-4">
-              Please sign in or create a researcher account before adding
-              products to your cart.
+              {accessDenied
+                ? "This account does not have permission to access the admin portal."
+                : requiresLoginForCart
+                  ? "Please sign in or create a researcher account before adding products to your cart."
+                  : "Please sign in to continue to the requested page."}
             </p>
           </div>
         ) : null}
-        <AccountAuth />
+        <AccountAuth redirectTo={redirectTo} />
         <div className="mt-10 grid grid-cols-1 gap-px bg-[var(--bare-rule)] md:grid-cols-3">
           {[
             {

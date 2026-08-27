@@ -42,7 +42,7 @@ function AuthModeToggle({
   );
 }
 
-export default function AccountAuth() {
+export default function AccountAuth({ redirectTo }: { redirectTo?: string }) {
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -96,6 +96,11 @@ export default function AccountAuth() {
 
     if (result.error) {
       setMessage(result.error.message);
+      return;
+    }
+
+    if (mode === "sign-in" && result.data.session && redirectTo) {
+      window.location.assign(redirectTo);
       return;
     }
 

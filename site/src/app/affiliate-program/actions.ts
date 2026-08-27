@@ -1,6 +1,7 @@
 "use server";
 
-import { createServerSupabaseClient } from "@/lib/supabase/client";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { affiliateInquirySchema } from "@/lib/validation/affiliate";
 
 export type AffiliateInquiryState = {
   ok: boolean;
@@ -15,35 +16,48 @@ export async function submitAffiliateInquiry(
   _state: AffiliateInquiryState,
   formData: FormData
 ): Promise<AffiliateInquiryState> {
-  const name = value(formData, "name");
-  const email = value(formData, "email");
-  const phone = value(formData, "phone");
-  const audience = value(formData, "audience");
-  const message = value(formData, "message");
-
-  if (!name || !email) {
-    return { ok: false, message: "Name and email are required." };
-  }
-
-  const supabase = createServerSupabaseClient();
-  if (!supabase) {
+  const parsed = affiliateInquirySchema.safeParse({
+    name: value(formData, "name"),
+    email: value(formData, "email"),
+    phone: value(formData, "phone"),
+    audience: value(formData, "audience"),
+    message: value(formData, "message"),
+  });
+  if (!parsed.success) {
     return {
-      ok: true,
-      message:
-        "Inquiry validated. Add Supabase env vars to persist affiliate applications.",
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Review the inquiry fields.",
     };
   }
 
-  const { error } = await supabase.from("affiliate_inquiries").insert({
-    name,
-    email,
-    phone: phone || null,
-    audience: audience || null,
-    message: message || null,
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) {
+    return {
+      ok: false,
+      message: "Affiliate inquiries are temporarily unavailable.",
+    };
+  }
+
+  const input = parsed.data;
+  const { error } = await supabase.rpc("submit_affiliate_inquiry", {
+    p_name: input.name,
+    p_email: input.email,
+    p_phone: input.phone,
+    p_audience: input.audience,
+    p_message: input.message,
   });
 
   if (error) {
-    return { ok: false, message: `Supabase rejected inquiry: ${error.message}` };
+    console.error("Affiliate inquiry failed", {
+      code: error.code,
+      message: error.message,
+    });
+    return {
+      ok: false,
+      message: error.message.includes("Too many recent")
+        ? "Too many recent inquiries. Please try again later."
+        : "The inquiry could not be submitted. Please try again.",
+    };
   }
 
   return {
