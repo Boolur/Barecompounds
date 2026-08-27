@@ -1,120 +1,104 @@
-import MarketingPage from "@/components/ui/MarketingPage";
+import Link from "next/link";
 import { getAdminSummary } from "@/lib/admin";
-
-const PAYMENT_FLOW = [
-  "Order Submitted",
-  "Pending Payment",
-  "Payment Verified",
-  "Order Accepted",
-  "Fulfillment Begins",
-  "Order Completed",
-];
+import { PageHeader } from "@/components/ui/PageHeader";
+import {
+  DataTable,
+  TableCell,
+  TableHead,
+  TableHeader,
+} from "@/components/ui/DataTable";
+import { EmptyState, InlineAlert } from "@/components/ui/EmptyState";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export const metadata = { title: "Admin Dashboard" };
 
 export default async function AdminPage() {
   const summary = await getAdminSummary();
   const metrics = [
-    ["Orders", summary.orders],
-    ["Pending payments", summary.pendingPayments],
-    ["Cash pickup", summary.cashPickup],
-    ["Affiliate inquiries", summary.affiliateInquiries],
-  ];
+    ["Orders", summary.orders, "/admin/orders"],
+    ["Pending payment", summary.pendingPayments, "/admin/orders"],
+    ["Cash pickup", summary.cashPickup, "/admin/orders"],
+    ["Affiliate inquiries", summary.affiliateInquiries, "/admin/affiliates"],
+  ] as const;
 
   return (
-    <MarketingPage
-      index="§ A"
-      eyebrow="Admin Dashboard"
-      title={
-        <>
-          Backend
-          <br />
-          <span
-            className="italic font-[280]"
-            style={{ fontVariationSettings: '"opsz" 144, "SOFT" 80' }}
+    <>
+      <PageHeader
+        eyebrow="Operations overview"
+        title="Good afternoon."
+        description="Monitor the manual-payment queue, fulfillment workload, and business exceptions from one place."
+      />
+      <div className="space-y-8 p-5 md:p-8">
+        {summary.errors.length ? (
+          <InlineAlert
+            title={summary.connected ? "Some metrics unavailable" : "Database access unavailable"}
+            tone={summary.connected ? "neutral" : "critical"}
           >
-            operations.
-          </span>
-        </>
-      }
-      description="Phase 4 admin surface for order management, payment verification, inventory by location, pickup scheduling, shipping, and affiliate reporting."
-      features={[
-        {
-          label: "Manual payment launch",
-          body: "No order should enter fulfillment until Cash, Zelle, or Venmo payment is verified.",
-        },
-        {
-          label: "Two locations",
-          body: "Inventory is modeled separately across two store locations and batch numbers.",
-        },
-        {
-          label: "Supabase-ready",
-          body: "The schema is ready for authenticated admin reads and writes once RLS/admin policies are finalized.",
-        },
-      ]}
-    >
-      <section className="container-bare py-20 md:py-28">
-        <div className="grid grid-cols-1 gap-px bg-[var(--bare-rule)] md:grid-cols-4">
-          {metrics.map(([label, value]) => (
-            <article key={label} className="bg-paper p-8 md:p-10">
-              <p className="eyebrow">{label}</p>
-              <p className="mt-8 font-serif text-5xl tracking-[-0.04em]">
-                {value}
-              </p>
-            </article>
-          ))}
-        </div>
-        {!summary.connected ? (
-          <p className="caption mt-6">
-            Admin read policies are not public. Metrics will populate after
-            Supabase admin access is configured.
-          </p>
+            {summary.errors.join(" ")}
+          </InlineAlert>
         ) : null}
-      </section>
 
-      <section className="container-bare pb-20 md:pb-28">
-        <div className="border border-[var(--bare-rule)] bg-paper p-8 md:p-10">
-          <p className="eyebrow">Recent orders</p>
-          {summary.recentOrders.length > 0 ? (
-            <ul className="mt-8 divide-y divide-[var(--bare-rule)]">
-              {summary.recentOrders.map((order) => (
-                <li
-                  key={order.id}
-                  className="grid grid-cols-1 gap-3 py-5 md:grid-cols-[1fr_1fr_auto_auto]"
-                >
-                  <span className="font-mono text-sm">{order.order_number}</span>
-                  <span className="text-sm text-smoke">{order.customer_email}</span>
-                  <span className="caption">{order.payment_status}</span>
-                  <span className="caption">{order.fulfillment_status}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="lede mt-8">
-              No readable orders yet. Once checkout writes orders and admin read
-              policies are enabled, this list becomes the working queue.
-            </p>
-          )}
-        </div>
-      </section>
-
-      <section className="container-bare pb-24 md:pb-32">
-        <div className="border border-[var(--bare-rule)] bg-cream p-8 md:p-10">
-          <p className="eyebrow">Payment workflow</p>
-          <ol className="mt-8 grid grid-cols-1 gap-px bg-[var(--bare-rule)] md:grid-cols-6">
-            {PAYMENT_FLOW.map((step, index) => (
-              <li key={step} className="bg-cream p-5">
-                <span className="font-mono text-xs text-taupe">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <p className="mt-4 font-serif text-2xl leading-none tracking-[-0.02em]">
-                  {step}
-                </p>
-              </li>
+        <section aria-labelledby="metrics-heading">
+          <h2 id="metrics-heading" className="sr-only">
+            Current metrics
+          </h2>
+          <div className="grid grid-cols-2 gap-px border border-[var(--bare-rule)] bg-[var(--bare-rule)] xl:grid-cols-4">
+            {metrics.map(([label, value, href]) => (
+              <Link key={label} href={href} className="group bg-paper p-5 transition-colors hover:bg-cream md:p-7">
+                <p className="eyebrow">{label}</p>
+                <div className="mt-7 flex items-end justify-between">
+                  <p className="font-serif text-4xl tracking-[-0.04em] md:text-5xl">
+                    {value ?? "—"}
+                  </p>
+                  <span aria-hidden="true" className="text-taupe transition-transform group-hover:translate-x-1">
+                    →
+                  </span>
+                </div>
+              </Link>
             ))}
-          </ol>
-        </div>
-      </section>
-    </MarketingPage>
+          </div>
+        </section>
+
+        <section aria-labelledby="recent-orders-heading">
+          <div className="mb-4 flex items-end justify-between">
+            <div>
+              <p className="eyebrow">Working queue</p>
+              <h2 id="recent-orders-heading" className="display-s mt-2">
+                Recent orders
+              </h2>
+            </div>
+            <Link href="/admin/orders" className="nav-link">
+              View all →
+            </Link>
+          </div>
+          {summary.recentOrders.length ? (
+            <DataTable caption="Six most recent orders">
+              <TableHead>
+                <TableHeader>Order</TableHeader>
+                <TableHeader>Customer</TableHeader>
+                <TableHeader>Payment</TableHeader>
+                <TableHeader>Fulfillment</TableHeader>
+              </TableHead>
+              <tbody>
+                {summary.recentOrders.map((order) => (
+                  <tr key={order.id} className="hover:bg-cream/60">
+                    <TableCell className="font-mono">{order.order_number}</TableCell>
+                    <TableCell>{order.customer_email}</TableCell>
+                    <TableCell><StatusBadge status={order.payment_status} /></TableCell>
+                    <TableCell><StatusBadge status={order.fulfillment_status} /></TableCell>
+                  </tr>
+                ))}
+              </tbody>
+            </DataTable>
+          ) : (
+            <EmptyState
+              eyebrow="Queue clear"
+              title="No readable orders"
+              description="New account-linked orders will appear here as soon as secure checkout begins receiving them."
+            />
+          )}
+        </section>
+      </div>
+    </>
   );
 }

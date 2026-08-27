@@ -40,7 +40,7 @@ export default function MarketingPage({
     <>
       <PromoBar />
       <EditorialNav />
-      <main className="bg-cream">
+      <main id="main-content" className="bg-cream">
         <section className="container-bare pt-16 pb-20 md:pt-28 md:pb-28">
           <HairlineRule index={index} label={eyebrow} />
           <div className="mt-14 grid grid-cols-1 gap-10 md:mt-20 md:grid-cols-12">

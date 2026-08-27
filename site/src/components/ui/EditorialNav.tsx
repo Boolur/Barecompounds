@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Wordmark from "./Wordmark";
 import CartBadge from "@/components/cart/CartBadge";
 import { cn } from "@/lib/cn";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
   { label: "Products", href: "/shop" },
@@ -16,6 +17,8 @@ const NAV_ITEMS = [
 export default function EditorialNav() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+  const [staff, setStaff] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -23,6 +26,40 @@ export default function EditorialNav() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) return;
+
+    async function updateAccount(userId?: string) {
+      setSignedIn(Boolean(userId));
+      if (!userId) {
+        setStaff(false);
+        return;
+      }
+      const { data } = await supabase!
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+      setStaff(Boolean(data && data.role !== "customer"));
+    }
+
+    supabase.auth.getUser().then(({ data }) => updateAccount(data.user?.id));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      void updateAccount(session?.user.id);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [open]);
 
   return (
     <header
@@ -63,6 +100,9 @@ export default function EditorialNav() {
             action="/shop"
             className="hidden h-10 w-[240px] items-center gap-2 rounded-full bg-white/70 px-4 text-sm text-smoke shadow-[inset_0_0_0_1px_rgba(10,10,10,0.04)] xl:flex"
           >
+            <label htmlFor="storefront-search" className="sr-only">
+              Search products
+            </label>
             <svg
               width="16"
               height="16"
@@ -76,6 +116,7 @@ export default function EditorialNav() {
               <path d="m10.4 10.4 3.1 3.1" />
             </svg>
             <input
+              id="storefront-search"
               name="q"
               type="search"
               placeholder="Search peptides..."
@@ -84,7 +125,7 @@ export default function EditorialNav() {
           </form>
           <Link
             href="/account"
-            aria-label="Account"
+            aria-label={signedIn ? "Open account portal" : "Sign in"}
             className="hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-white"
           >
             <svg
@@ -132,8 +173,16 @@ export default function EditorialNav() {
             href="/account"
             className="hidden rounded-lg border border-[var(--bare-rule)] bg-white/55 px-5 py-3 text-sm font-semibold text-ink transition-colors hover:bg-white md:inline-flex"
           >
-            Login
+            {signedIn ? "Account" : "Login"}
           </Link>
+          {staff ? (
+            <Link
+              href="/admin"
+              className="hidden rounded-lg border border-[var(--bare-rule)] bg-cream px-5 py-3 text-sm font-semibold text-ink transition-colors hover:bg-white lg:inline-flex"
+            >
+              Admin
+            </Link>
+          ) : null}
 
           {/* Mobile trigger */}
           <button
@@ -159,9 +208,11 @@ export default function EditorialNav() {
       {/* Mobile nav sheet */}
       <div
         id="mobile-nav"
+        hidden={!open}
+        aria-hidden={!open}
         className={cn(
-          "overflow-hidden border-t border-[var(--bare-rule)] transition-[max-height] duration-500 ease-[var(--ease-editorial)] md:hidden",
-          open ? "max-h-[60vh]" : "max-h-0"
+          "max-h-[calc(100dvh-7rem)] overflow-y-auto border-t border-[var(--bare-rule)] md:hidden",
+          open ? "block" : "hidden"
         )}
       >
         <nav
@@ -180,6 +231,22 @@ export default function EditorialNav() {
                   {item.label}
                 </span>
               </span>
+              <span className="caption">→</span>
+            </Link>
+          ))}
+          {[
+            [signedIn ? "Account portal" : "Sign in", "/account"],
+            ["Cart", "/cart"],
+            ["Shop now", "/shop"],
+            ...(staff ? [["Admin console", "/admin"]] : []),
+          ].map(([label, href]) => (
+            <Link
+              key={`${label}-${href}`}
+              href={href}
+              onClick={() => setOpen(false)}
+              className="flex items-baseline justify-between py-5"
+            >
+              <span className="font-serif text-2xl tracking-tight">{label}</span>
               <span className="caption">→</span>
             </Link>
           ))}

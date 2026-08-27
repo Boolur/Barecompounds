@@ -15,9 +15,10 @@ export type AdminSummary = {
   orders: number;
   pendingPayments: number;
   cashPickup: number;
-  affiliateInquiries: number;
+  affiliateInquiries: number | null;
   recentOrders: AdminOrder[];
   connected: boolean;
+  errors: string[];
 };
 
 export async function getAdminSummary(): Promise<AdminSummary> {
@@ -25,9 +26,10 @@ export async function getAdminSummary(): Promise<AdminSummary> {
     orders: 0,
     pendingPayments: 0,
     cashPickup: 0,
-    affiliateInquiries: 0,
+    affiliateInquiries: null,
     recentOrders: [],
     connected: false,
+    errors: ["Admin data is unavailable."],
   };
 
   const supabase = await createServerSupabaseClient();
@@ -56,14 +58,28 @@ export async function getAdminSummary(): Promise<AdminSummary> {
         .limit(6),
     ]);
 
-  if (orders.error) return fallback;
+  const coreErrors = [
+    orders.error,
+    pendingPayments.error,
+    cashPickup.error,
+    recentOrders.error,
+  ].filter(Boolean);
+  const errors = [
+    ...(coreErrors.length ? ["Order metrics could not be loaded."] : []),
+    ...(affiliateInquiries.error
+      ? ["Affiliate inquiry totals are unavailable for this role."]
+      : []),
+  ];
 
   return {
     orders: orders.count ?? 0,
     pendingPayments: pendingPayments.count ?? 0,
     cashPickup: cashPickup.count ?? 0,
-    affiliateInquiries: affiliateInquiries.count ?? 0,
+    affiliateInquiries: affiliateInquiries.error
+      ? null
+      : (affiliateInquiries.count ?? 0),
     recentOrders: recentOrders.data ?? [],
-    connected: true,
+    connected: coreErrors.length === 0,
+    errors,
   };
 }

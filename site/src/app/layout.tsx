@@ -3,6 +3,7 @@ import { Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import AgeGate from "@/components/AgeGate";
 import { CartProvider } from "@/components/cart/CartProvider";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -61,10 +62,15 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col grain bg-cream text-ink">
-        <CartProvider>
-          <AgeGate />
-          {children}
-        </CartProvider>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+        <ToastProvider>
+          <CartProvider>
+            <AgeGate />
+            {children}
+          </CartProvider>
+        </ToastProvider>
       </body>
     </html>
   );

@@ -13,7 +13,7 @@ export default function Home() {
     <>
       <PromoBar />
       <EditorialNav />
-      <main>
+      <main id="main-content">
         <ScrollHero />
         <CompoundIndex />
         <BrandStatement />

@@ -23,7 +23,7 @@ export default function ComingSoon({
     <>
       <PromoBar />
       <EditorialNav />
-      <main className="min-h-[80vh] bg-cream">
+      <main id="main-content" className="min-h-[80vh] bg-cream">
         <section className="container-bare pt-16 md:pt-28 pb-24 md:pb-40">
           <HairlineRule index={index} label={eyebrow} />
 

@@ -99,8 +99,8 @@ export default function AccountAuth({ redirectTo }: { redirectTo?: string }) {
       return;
     }
 
-    if (mode === "sign-in" && result.data.session && redirectTo) {
-      window.location.assign(redirectTo);
+    if (mode === "sign-in" && result.data.session) {
+      window.location.assign(redirectTo ?? "/account");
       return;
     }
 

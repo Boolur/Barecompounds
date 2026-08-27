@@ -116,6 +116,34 @@ body {
   color: var(--bare-cream);
 }
 
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--bare-ink);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  background: var(--bare-ink);
+  color: var(--bare-cream);
+  padding: 0.75rem 1rem;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.portal-surface {
+  background-image:
+    linear-gradient(var(--bare-rule) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bare-rule) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: -1px -1px;
+}
+
 /* Editorial typographic classes */
 .display-xl {
   font-family: var(--font-serif);
