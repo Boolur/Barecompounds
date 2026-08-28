@@ -13,12 +13,14 @@ export default function AddToCartButton({ item }: { item: Compound }) {
   const [authOpen, setAuthOpen] = useState(false);
 
   function confirmAdded() {
+    if (item.inStock === false) return;
     addItem(item);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1400);
   }
 
   async function handleAdd() {
+    if (item.inStock === false) return;
     const supabase = createBrowserSupabaseClient();
     if (!supabase) {
       setAuthOpen(true);
@@ -42,10 +44,10 @@ export default function AddToCartButton({ item }: { item: Compound }) {
       <button
         type="button"
         onClick={handleAdd}
-        disabled={checking}
-        className="nav-link rounded-full border border-[var(--bare-rule-strong)] px-4 py-2 text-ink transition-colors hover:bg-ink hover:text-cream"
+        disabled={checking || item.inStock === false}
+        className="nav-link rounded-full border border-[var(--bare-rule-strong)] px-4 py-2 text-ink transition-colors hover:bg-ink hover:text-cream disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {checking ? "Checking" : added ? "Added" : "Add"}
+        {item.inStock === false ? "Out of stock" : checking ? "Checking" : added ? "Added" : "Add"}
       </button>
       <CartAuthModal
         open={authOpen}

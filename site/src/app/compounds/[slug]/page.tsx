@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import ComingSoon from "@/components/ui/ComingSoon";
-import { COMPOUNDS, getCompound } from "@/lib/compounds";
+import { COMPOUNDS } from "@/lib/compounds";
+import { getStorefrontProduct } from "@/lib/commerce";
 
 export function generateStaticParams() {
   return COMPOUNDS.map((c) => ({ slug: c.slug }));
@@ -12,7 +13,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const c = getCompound(slug);
+  const c = await getStorefrontProduct(slug);
   return { title: c?.name ?? "Compound" };
 }
 
@@ -22,7 +23,7 @@ export default async function CompoundPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const compound = getCompound(slug);
+  const compound = await getStorefrontProduct(slug);
   if (!compound) return notFound();
 
   return (

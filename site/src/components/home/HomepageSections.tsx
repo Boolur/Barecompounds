@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import HairlineRule from "@/components/ui/HairlineRule";
-import { BEST_SELLERS, FEATURED_COMPOUNDS, PRODUCT_CATEGORIES } from "@/lib/compounds";
+import type { Compound } from "@/components/ui/ProductIndexRow";
 
 const HOURS = [
   ["Monday", "9:00 AM - 5:00 PM"],
@@ -42,7 +42,15 @@ function ProductNameList({
   );
 }
 
-export default function HomepageSections() {
+export default function HomepageSections({
+  featuredProducts,
+  bestSellers,
+  categories,
+}: {
+  featuredProducts: Compound[];
+  bestSellers: Compound[];
+  categories: { name: string; products: string[] }[];
+}) {
   return (
     <>
       <section className="bg-paper">
@@ -52,12 +60,12 @@ export default function HomepageSections() {
             <ProductNameList
               title="Featured products"
               href="/featured-products"
-              products={FEATURED_COMPOUNDS}
+              products={featuredProducts}
             />
             <ProductNameList
               title="Best sellers"
               href="/best-sellers"
-              products={BEST_SELLERS}
+              products={bestSellers}
             />
           </div>
         </div>
@@ -67,7 +75,7 @@ export default function HomepageSections() {
         <div className="container-bare py-20 md:py-28">
           <HairlineRule index="§ 04" label="Product categories" />
           <div className="mt-12 grid grid-cols-1 gap-px bg-[var(--bare-rule)] md:grid-cols-2 xl:grid-cols-3">
-            {PRODUCT_CATEGORIES.map((category) => (
+            {categories.map((category) => (
               <article key={category.name} className="bg-cream p-8 md:p-10">
                 <p className="eyebrow">{category.name}</p>
                 <ul className="mt-8 flex flex-wrap gap-2">

@@ -13,6 +13,8 @@ export type Compound = {
   molecularWeight: string;
   mg: string;
   tint: string;
+  priceCents?: number;
+  inStock?: boolean;
 };
 
 type Props = {
@@ -64,7 +66,10 @@ export default function ProductIndexRow({ item, className }: Props) {
         </span>
 
         <span className="col-span-2 flex items-center justify-between gap-4 md:col-span-1 md:justify-end">
-          <span className="caption tabular-nums">{item.mg}</span>
+          <span className="caption tabular-nums">
+            {item.priceCents != null ? `$${(item.priceCents / 100).toFixed(2)} · ` : ""}
+            {item.mg}
+          </span>
           <AddToCartButton item={item} />
           <span
             className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--bare-rule-strong)] transition-colors duration-500 group-hover:bg-ink group-hover:text-cream group-hover:border-ink"

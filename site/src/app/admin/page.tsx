@@ -82,7 +82,11 @@ export default async function AdminPage() {
               <tbody>
                 {summary.recentOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-cream/60">
-                    <TableCell className="font-mono">{order.order_number}</TableCell>
+                    <TableCell className="font-mono">
+                      <Link href={`/admin/orders/${order.id}`} className="underline-offset-4 hover:underline">
+                        {order.order_number}
+                      </Link>
+                    </TableCell>
                     <TableCell>{order.customer_email}</TableCell>
                     <TableCell><StatusBadge status={order.payment_status} /></TableCell>
                     <TableCell><StatusBadge status={order.fulfillment_status} /></TableCell>

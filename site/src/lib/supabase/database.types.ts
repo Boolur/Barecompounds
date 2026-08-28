@@ -36,6 +36,7 @@ export type InventoryMovementType =
   | "order_fulfillment"
   | "restock"
   | "return";
+export type ProductPublicationStatus = "draft" | "published" | "archived";
 
 type Table<Row extends object, Required extends keyof Row = never> = {
   Row: Row;
@@ -49,7 +50,9 @@ type ProductCategory = {
   name: string;
   slug: string;
   sort_order: number;
+  is_active: boolean;
   created_at: string;
+  updated_at: string;
 };
 type Product = {
   id: string;
@@ -57,11 +60,15 @@ type Product = {
   slug: string;
   name: string;
   subtitle: string;
+  description: string;
   molecular_weight: string | null;
   default_size: string | null;
   is_active: boolean;
   is_featured: boolean;
   is_best_seller: boolean;
+  publication_status: ProductPublicationStatus;
+  published_at: string | null;
+  archived_at: string | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -73,7 +80,19 @@ type ProductVariant = {
   size_label: string;
   price_cents: number;
   is_active: boolean;
+  sort_order: number;
   created_at: string;
+  updated_at: string;
+};
+type ProductMedia = {
+  id: string;
+  product_id: string;
+  storage_path: string;
+  alt_text: string;
+  sort_order: number;
+  is_primary: boolean;
+  created_at: string;
+  updated_at: string;
 };
 type InventoryLocation = {
   id: string;
@@ -82,6 +101,7 @@ type InventoryLocation = {
   address: string | null;
   is_active: boolean;
   created_at: string;
+  updated_at: string;
 };
 type InventoryBatch = {
   id: string;
@@ -92,8 +112,11 @@ type InventoryBatch = {
   quantity_reserved: number;
   low_stock_threshold: number;
   coa_url: string | null;
+  coa_storage_path: string | null;
   expires_at: string | null;
+  received_at: string;
   created_at: string;
+  updated_at: string;
 };
 type Profile = {
   id: string;
@@ -140,6 +163,7 @@ type Order = {
   notes: string | null;
   reservation_expires_at: string | null;
   reservations_released_at: string | null;
+  inventory_committed_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -161,6 +185,7 @@ type Payment = {
   method: PaymentMethod;
   status: PaymentStatus;
   amount_cents: number;
+  received_amount_cents: number | null;
   transaction_reference: string | null;
   verified_by: string | null;
   verified_at: string | null;
@@ -270,6 +295,7 @@ export type Database = {
         ProductVariant,
         "product_id" | "sku" | "size_label"
       >;
+      product_media: Table<ProductMedia, "product_id" | "storage_path">;
       inventory_locations: Table<InventoryLocation, "name" | "slug">;
       inventory_batches: Table<
         InventoryBatch,
@@ -305,6 +331,61 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      admin_update_payment: {
+        Args: {
+          p_order_id: string;
+          p_status: PaymentStatus;
+          p_received_amount_cents: number;
+          p_transaction_reference: string;
+          p_customer_message: string;
+          p_note: string;
+        };
+        Returns: undefined;
+      };
+      admin_update_fulfillment: {
+        Args: {
+          p_order_id: string;
+          p_status: FulfillmentStatus;
+          p_carrier: string;
+          p_tracking_number: string;
+          p_estimated_delivery_date: string | null;
+          p_scheduled_for: string | null;
+          p_location_id: string | null;
+          p_customer_message: string;
+          p_note: string;
+        };
+        Returns: undefined;
+      };
+      admin_set_product_publication: {
+        Args: {
+          p_product_id: string;
+          p_status: ProductPublicationStatus;
+        };
+        Returns: undefined;
+      };
+      admin_save_inventory_batch: {
+        Args: {
+          p_batch_id: string | null;
+          p_product_variant_id: string;
+          p_location_id: string;
+          p_batch_number: string;
+          p_initial_quantity: number;
+          p_low_stock_threshold: number;
+          p_coa_url: string;
+          p_coa_storage_path: string;
+          p_expires_at: string | null;
+        };
+        Returns: string;
+      };
+      admin_adjust_inventory: {
+        Args: {
+          p_batch_id: string;
+          p_quantity_delta: number;
+          p_movement_type: InventoryMovementType;
+          p_note: string;
+        };
+        Returns: number;
+      };
       current_app_role: {
         Args: Record<PropertyKey, never>;
         Returns: AppRole;
@@ -312,6 +393,13 @@ export type Database = {
       has_any_role: {
         Args: { allowed_roles: AppRole[] };
         Returns: boolean;
+      };
+      get_catalog_availability: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          product_variant_id: string;
+          in_stock: boolean;
+        }[];
       };
       release_expired_reservations: {
         Args: Record<PropertyKey, never>;
@@ -356,6 +444,7 @@ export type Database = {
       fulfillment_method: FulfillmentMethod;
       fulfillment_status: FulfillmentStatus;
       inventory_movement_type: InventoryMovementType;
+      product_publication_status: ProductPublicationStatus;
     };
     CompositeTypes: Record<string, never>;
   };

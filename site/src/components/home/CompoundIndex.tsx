@@ -1,12 +1,11 @@
 import Link from "next/link";
-import ProductIndexRow from "@/components/ui/ProductIndexRow";
-import { COMPOUNDS } from "@/lib/compounds";
+import ProductIndexRow, { type Compound } from "@/components/ui/ProductIndexRow";
 
 const PREVIEW_COUNT = 8;
 const UPDATED_LABEL = "July 2026";
 
-export default function CompoundIndex() {
-  const previewProducts = COMPOUNDS.slice(0, PREVIEW_COUNT);
+export default function CompoundIndex({ products }: { products: Compound[] }) {
+  const previewProducts = products.slice(0, PREVIEW_COUNT);
 
   return (
     <section id="compounds" className="bg-[#f8f7f4]">
@@ -33,7 +32,7 @@ export default function CompoundIndex() {
 
       <div className="container-bare py-12 md:py-16 flex flex-col md:flex-row items-baseline justify-between gap-6">
         <span className="caption font-mono tabular-nums">
-          {PREVIEW_COUNT} of {COMPOUNDS.length} products · updated {UPDATED_LABEL}
+          {Math.min(PREVIEW_COUNT, products.length)} of {products.length} products · updated {UPDATED_LABEL}
         </span>
         <Link
           href="/shop"

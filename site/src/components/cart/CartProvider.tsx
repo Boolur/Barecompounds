@@ -75,7 +75,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           category: compound.category,
           size: compound.mg,
           quantity: 1,
-          unitPriceCents: 0,
+          unitPriceCents: compound.priceCents ?? 0,
         },
       ];
     });
