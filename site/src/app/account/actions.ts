@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   customerAddressIdSchema,
@@ -40,6 +41,9 @@ export async function updateCustomerProfileAction(
   if (!parsed.success) {
     return failure(parsed.error.issues[0]?.message ?? "Invalid profile.");
   }
+  if (!(await checkRateLimit("account-write"))) {
+    return failure("Too many account changes. Please try again later.");
+  }
   const supabase = await customerClient();
   if (!supabase) return failure("Sign in again to update your profile.");
   const { error } = await supabase.rpc("customer_update_profile", {
@@ -72,6 +76,9 @@ export async function saveCustomerAddressAction(
   if (!parsed.success) {
     return failure(parsed.error.issues[0]?.message ?? "Invalid address.");
   }
+  if (!(await checkRateLimit("account-write"))) {
+    return failure("Too many account changes. Please try again later.");
+  }
   const supabase = await customerClient();
   if (!supabase) return failure("Sign in again to save this address.");
   const { error } = await supabase.rpc("customer_save_address", {
@@ -97,6 +104,9 @@ export async function deleteCustomerAddressAction(
 ): Promise<CustomerActionState> {
   const parsed = customerAddressIdSchema.safeParse({ id: formData.get("id") });
   if (!parsed.success) return failure("Invalid address.");
+  if (!(await checkRateLimit("account-write"))) {
+    return failure("Too many account changes. Please try again later.");
+  }
   const supabase = await customerClient();
   if (!supabase) return failure("Sign in again to remove this address.");
   const { error } = await supabase.rpc("customer_delete_address", {
@@ -119,6 +129,9 @@ export async function submitPaymentReferenceAction(
   });
   if (!parsed.success) {
     return failure(parsed.error.issues[0]?.message ?? "Invalid payment reference.");
+  }
+  if (!(await checkRateLimit("payment-reference", [parsed.data.orderId]))) {
+    return failure("Too many payment submissions. Please try again later.");
   }
   const supabase = await customerClient();
   if (!supabase) return failure("Sign in again to submit payment details.");

@@ -125,7 +125,7 @@ export default function VerificationTeaser() {
         {/* Product still life */}
         <div className="mt-24 md:mt-32 relative aspect-[16/9] w-full overflow-hidden border-y border-[var(--bare-rule)]">
           <Image
-            src="/brand/new.png"
+            src="/brand/hero-lab-vials.png"
             alt="Bare Compounds lineup — KLOW80, GLOW70, BPC-157, TB-500, Tirzepatide, Retatrutide"
             fill
             sizes="100vw"

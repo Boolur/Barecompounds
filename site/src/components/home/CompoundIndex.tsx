@@ -10,7 +10,7 @@ export default function CompoundIndex({ products }: { products: Compound[] }) {
   return (
     <section id="compounds" className="bg-[#f8f7f4]">
       <div className="container-bare py-12 text-center md:py-14">
-        <span className="inline-flex rounded-full bg-[#ece9e3] px-4 py-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.28em] text-[#8b8176]">
+        <span className="inline-flex rounded-full bg-[#ece9e3] px-4 py-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.28em] text-[#5f574e]">
           Popular Products
         </span>
 

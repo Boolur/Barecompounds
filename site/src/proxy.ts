@@ -9,8 +9,33 @@ import {
 
 const STAFF_ROLES = new Set(["owner", "admin", "fulfillment", "read_only"]);
 
+function contentSecurityPolicy(nonce: string) {
+  const developmentScripts =
+    process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'";
+  const developmentConnections =
+    process.env.NODE_ENV === "production"
+      ? ""
+      : " http://127.0.0.1:* ws://127.0.0.1:* http://localhost:* ws://localhost:*";
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${developmentScripts}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://*.supabase.co",
+    "font-src 'self' data:",
+    `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io${developmentConnections}`,
+    "worker-src 'self' blob:",
+    "upgrade-insecure-requests",
+  ].join("; ");
+}
+
 function redirectWithCookies(url: URL, source: NextResponse) {
   const redirectResponse = NextResponse.redirect(url);
+  const csp = source.headers.get("Content-Security-Policy");
+  if (csp) redirectResponse.headers.set("Content-Security-Policy", csp);
   source.cookies.getAll().forEach((cookie) => {
     redirectResponse.cookies.set(cookie);
   });
@@ -18,7 +43,19 @@ function redirectWithCookies(url: URL, source: NextResponse) {
 }
 
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  const nonce = btoa(crypto.randomUUID());
+  const csp = contentSecurityPolicy(nonce);
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+  const nextResponse = () => {
+    const result = NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+    result.headers.set("Content-Security-Policy", csp);
+    return result;
+  };
+  let response = nextResponse();
 
   if (!isSupabaseConfigured()) {
     return response;
@@ -34,7 +71,7 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value);
           });
-          response = NextResponse.next({ request });
+          response = nextResponse();
           cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options);
           });

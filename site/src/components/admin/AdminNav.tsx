@@ -13,6 +13,7 @@ const ITEMS = [
   ["Staff", "/admin/staff"],
   ["Settings", "/admin/settings"],
   ["Reports", "/admin/reports"],
+  ["Notifications", "/admin/notifications"],
   ["Affiliates", "/admin/affiliates"],
   ["Audit log", "/admin/audit"],
 ] as const;

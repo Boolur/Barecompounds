@@ -1,6 +1,7 @@
 "use server";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { trackingSchema } from "@/lib/validation/customerPortal";
 
 export type TrackingState = {
@@ -29,6 +30,12 @@ export async function trackOrderAction(
   });
   if (!parsed.success) {
     return { status: "error", message: "Enter the complete tracking code." };
+  }
+  if (!(await checkRateLimit("track"))) {
+    return {
+      status: "error",
+      message: "Too many tracking attempts. Please try again later.",
+    };
   }
   const supabase = await createServerSupabaseClient();
   if (!supabase) {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Wordmark from "./Wordmark";
 import IridescentStrip from "./IridescentStrip";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const COLUMNS = [
   {
@@ -42,7 +43,21 @@ const COLUMNS = [
   },
 ];
 
-export default function Footer() {
+function formatBusinessHours(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  return Object.entries(value)
+    .filter((entry): entry is [string, string] => typeof entry[1] === "string" && Boolean(entry[1]))
+    .map(([day, hours]) => `${day}: ${hours}`);
+}
+
+export default async function Footer() {
+  const supabase = await createServerSupabaseClient();
+  const { data } = supabase
+    ? await supabase.rpc("get_public_business_settings")
+    : { data: null };
+  const settings = data?.[0];
+  const hours = formatBusinessHours(settings?.business_hours);
+
   return (
     <footer className="bg-cream text-ink">
       <IridescentStrip height="1px" soft />
@@ -55,12 +70,21 @@ export default function Footer() {
               A study in restraint. Research-grade peptides, documented batch
               by batch.
             </p>
-            <p className="caption max-w-[36ch]">
-              Email · Phone · Store address to be added before launch
-            </p>
-            <p className="caption max-w-[36ch]">
-              Mon-Fri 9:00 AM - 5:00 PM · Sat 11:00 AM - 3:00 PM · Sun closed
-            </p>
+            {settings?.contact_email || settings?.contact_phone ? (
+              <address className="caption flex max-w-[36ch] flex-col gap-2 not-italic">
+                {settings.contact_email ? (
+                  <a className="hover:text-taupe" href={`mailto:${settings.contact_email}`}>{settings.contact_email}</a>
+                ) : null}
+                {settings.contact_phone ? (
+                  <a className="hover:text-taupe" href={`tel:${settings.contact_phone.replace(/[^\d+]/g, "")}`}>{settings.contact_phone}</a>
+                ) : null}
+              </address>
+            ) : (
+              <p className="caption max-w-[36ch]">Support is available through the help center.</p>
+            )}
+            {hours.length ? (
+              <p className="caption max-w-[40ch]">{hours.join(" · ")}</p>
+            ) : null}
           </div>
 
           {COLUMNS.map((col) => (

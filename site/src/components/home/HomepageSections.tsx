@@ -171,10 +171,9 @@ export default function HomepageSections({
           <div className="mt-12 grid grid-cols-1 gap-10 md:grid-cols-12">
             <h2 className="display-l md:col-span-6">Premium, modern, minimal, research-focused.</h2>
             <p className="lede md:col-span-5 md:col-start-8">
-              The Phase 1 site focuses on clarity: simple shopping paths,
-              direct category organization, visible pickup information, and a
-              backend-ready structure for future inventory, orders, affiliate
-              tracking, and researcher accounts.
+              Clear shopping paths, direct category organization, current
+              inventory, visible pickup information, and researcher accounts
+              keep every order connected to its operational record.
             </p>
           </div>
         </div>

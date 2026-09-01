@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import { Dialog } from "@/components/ui/Dialog";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 type Mode = "sign-in" | "sign-up";
@@ -53,8 +54,6 @@ export default function CartAuthModal({ open, onAuthenticated, onClose }: Props)
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
 
-  if (!open) return null;
-
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const supabase = createBrowserSupabaseClient();
@@ -88,32 +87,15 @@ export default function CartAuthModal({ open, onAuthenticated, onClose }: Props)
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="cart-auth-title"
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-ink/65 px-5 backdrop-blur-md"
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={mode === "sign-in" ? "Sign in before adding products." : "Create an account to continue."}
+      description="A researcher account is required to add products to the cart."
+      className="max-h-[90vh] overflow-y-auto"
     >
-      <div className="w-full max-w-2xl border border-[var(--bare-rule-strong)] bg-cream p-8 shadow-2xl md:p-10">
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <p className="eyebrow">Researcher account required</p>
-            <h2 id="cart-auth-title" className="display-s mt-6">
-              {mode === "sign-in"
-                ? "Sign in before adding products."
-                : "Create an account to continue."}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-[var(--bare-rule)] px-3 py-1 text-sm"
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="mt-8">
+      <div>
+        <div>
           <ModalModeToggle
             mode={mode}
             setMode={(nextMode) => {
@@ -123,7 +105,7 @@ export default function CartAuthModal({ open, onAuthenticated, onClose }: Props)
           />
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 grid grid-cols-1 gap-5">
+        <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-5">
           <label className="flex flex-col gap-2">
             <span className="eyebrow">Email</span>
             <input
@@ -166,8 +148,8 @@ export default function CartAuthModal({ open, onAuthenticated, onClose }: Props)
           </div>
         </form>
 
-        {message ? <p className="caption mt-6 text-ink">{message}</p> : null}
+        {message ? <p role="status" aria-live="polite" className="caption mt-6 text-ink">{message}</p> : null}
       </div>
-    </div>
+    </Dialog>
   );
 }

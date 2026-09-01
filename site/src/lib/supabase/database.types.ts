@@ -272,8 +272,10 @@ type NotificationOutbox = {
   attempt_count: number;
   last_error: string | null;
   provider_message_id: string | null;
+  first_attempt_at: string | null;
   last_attempt_at: string | null;
   lease_expires_at: string | null;
+  lease_token: string | null;
   available_at: string;
   sent_at: string | null;
   created_at: string;
@@ -612,6 +614,44 @@ export type Database = {
           pickup_status: string | null;
         }[];
       };
+      claim_notification_outbox: {
+        Args: { p_limit?: number };
+        Returns: {
+          id: string;
+          lease_token: string;
+          recipient_email: string;
+          event_type: string;
+          payload: Json;
+        }[];
+      };
+      complete_notification_outbox: {
+        Args: {
+          p_id: string;
+          p_lease_token: string;
+          p_succeeded: boolean;
+          p_retryable: boolean;
+          p_provider_message_id: string | null;
+          p_error_code: string;
+        };
+        Returns: undefined;
+      };
+      owner_notification_delivery_health: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          pending_count: number;
+          processing_count: number;
+          retrying_count: number;
+          exhausted_count: number;
+          sent_last_24_hours: number;
+          oldest_ready_at: string | null;
+          oldest_lease_expires_at: string | null;
+          last_sent_at: string | null;
+        }[];
+      };
+      owner_schedule_notification_delivery: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
       owner_set_profile_role: {
         Args: {
           p_profile_id: string;
@@ -680,6 +720,18 @@ export type Database = {
         Returns: {
           product_variant_id: string;
           in_stock: boolean;
+        }[];
+      };
+      get_public_coa_records: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          batch_number: string;
+          received_at: string;
+          expires_at: string | null;
+          coa_url: string | null;
+          coa_storage_path: string | null;
+          product_name: string;
+          size_label: string;
         }[];
       };
       get_public_business_settings: {

@@ -1,1 +1,7 @@
 supabase/.temp/
+site/.next/
+site/node_modules/
+site/coverage/
+site/playwright-report/
+site/test-results/
+backups/

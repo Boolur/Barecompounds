@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bare Compounds site
 
-## Getting Started
+This directory is the deployable Next.js 16 App Router application.
 
-First, run the development server:
+## Requirements
+
+- Node.js 22 (Next.js 16 requires a modern Node.js runtime)
+- npm and the checked-in `package-lock.json`
+- A non-production Supabase project for local work
+
+## Configure
+
+Create `.env.local`:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-publishable-anon-key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Only the public project URL and anon/publishable key belong in the browser app.
+Never expose a service-role key through a `NEXT_PUBLIC_` variable.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Supabase Auth must allow the local origin and the application callbacks used by
+the account flows:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `http://localhost:3000/account`
+- `http://localhost:3000/reset-password`
+- `http://localhost:3000/staff-invite`
 
-## Learn More
+Use equivalent exact HTTPS URLs in production.
 
-To learn more about Next.js, take a look at the following resources:
+## Develop and verify
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm ci
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open `http://localhost:3000`.
 
-## Deploy on Vercel
+Before opening a pull request:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run test:e2e
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Playwright starts the local development server unless `PLAYWRIGHT_BASE_URL` is
+set to an already-running deployment.
+
+## Deploy
+
+Set Vercel's root directory to `site`, install with `npm ci`, and build with
+`npm run build`. Keep Preview and Production environment values separate, and
+do not connect preview deployments to production Supabase.
+
+Production metadata assumes the canonical origin is
+`https://barecompounds.com`. Private account, checkout, tracking, password
+reset, staff invitation, and Admin route trees emit `noindex, nofollow` and are
+also disallowed in `robots.txt`.
+
+Production rate limiting requires `UPSTASH_REDIS_REST_URL`,
+`UPSTASH_REDIS_REST_TOKEN`, and a separately generated
+`RATE_LIMIT_HASH_SECRET`. Sentry uses `SENTRY_DSN`/`NEXT_PUBLIC_SENTRY_DSN`,
+environment and sample-rate variables, plus `SENTRY_ORG`, `SENTRY_PROJECT`, and
+a server-only `SENTRY_AUTH_TOKEN` for source-map upload. See the operations
+runbook for setup and triage.
+
+See the repository [launch checklist](../docs/production-launch.md) and
+[operations runbook](../docs/operations-runbook.md) before releasing.

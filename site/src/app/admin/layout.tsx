@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { AppRole } from "@/lib/supabase/database.types";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 const STAFF_ROLES: AppRole[] = [
   "owner",

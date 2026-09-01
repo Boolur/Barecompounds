@@ -3,8 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const PROMO_ITEMS = [
   { text: "Free local pickup available" },
-  { text: "Minimum delivery order: updates coming soon", tone: "accent" as const },
-  { text: "Use code: launch offers coming soon" },
+  { text: "Current pricing and availability shown in the catalog", tone: "accent" as const },
   { text: "Third-party verified · 99% purity", tone: "muted" as const },
   { text: "For research use only", tone: "muted" as const },
   { text: "New products available" },

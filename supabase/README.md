@@ -1,18 +1,17 @@
 # Supabase Setup
 
-Project URL:
+The database is defined by the ordered SQL files in `migrations/`. Use a
+separate Supabase project for local/preview work and production.
 
-```bash
-NEXT_PUBLIC_SUPABASE_URL=https://hlcwqhcmhrsqakbusleb.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=replace-with-your-anon-public-key
-```
-
-## Apply Schema
+## Apply schema
 
 Apply every file in `migrations/` in numeric order through the Supabase SQL
-editor or the Supabase CLI. Migration `004_phase5_security_foundation.sql`
-removes anonymous checkout writes, adds staff roles and RLS, synchronizes Auth
-users to profiles, and installs the transactional checkout function.
+editor or a reviewed Supabase CLI workflow. Never modify a migration that has
+already run in a shared environment; add a new forward migration instead.
+
+GitHub CI uses `config.toml` to start the local Supabase stack, rebuilds it from
+all migrations, and runs the pgTAP suites in `tests/`. It does not connect to a
+hosted project and requires no repository secrets.
 
 The schema covers:
 
@@ -22,8 +21,25 @@ The schema covers:
 - Cash, Zelle, and Venmo payment tracking
 - Local pickup appointments and shipping fulfillment records
 - Affiliate profiles, promo codes, referrals, commissions, and payout status
+- Customer profile/address/order access, public tokenized order tracking,
+  notification outbox records, audited owner operations, and business settings
 
-## Launch Rules
+## Application environment
+
+Set these values in `site/.env.local` and the matching deployment environment:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-publishable-anon-key
+```
+
+The anon key is intentionally public and relies on RLS. Service-role keys,
+database passwords, and access tokens must remain server/operator-only.
+
+Configure Supabase Auth Site URL and the redirect allow-list for `/account`,
+`/reset-password`, and `/staff-invite` on each exact application origin.
+
+## Launch rules
 
 - Cash orders are only valid for local pickup.
 - Zelle and Venmo orders start as `pending_payment`.
@@ -31,25 +47,27 @@ The schema covers:
 - Tracking numbers are manually entered at launch.
 - Inventory is tracked by batch and store location.
 
-## First Owner Bootstrap
+## First owner bootstrap
 
-Create the owner's account through the site, apply all migrations, and then run
-this once in the Supabase SQL editor with the real owner email:
+Apply all migrations, create and confirm the owner's account through Auth, then
+run this once in the Supabase SQL editor with the verified Auth user UUID:
 
 ```sql
+begin;
 update public.profiles
 set role = 'owner',
     is_admin = true,
+    account_status = 'active',
     updated_at = now()
-where email = 'owner@example.com';
+where id = '<verified-auth-user-uuid>';
+commit;
 ```
 
 Confirm that exactly one row was updated. Further staff and role management
-must be performed by an owner through audited application workflows as those
-admin modules are introduced. Never make the public signup path assign staff
-roles.
+must use the audited owner workflows in Admin. Never make public signup assign
+staff roles. Create and test a second active owner before launch.
 
-## Phase 1 Security Model
+## Security model
 
 - `/admin` requires an authenticated `owner`, `admin`, `fulfillment`, or
   `read_only` profile. The admin layout repeats this check server-side.
@@ -67,14 +85,33 @@ roles.
 - Existing `is_admin = true` profiles are migrated to `admin`; the first
   `owner` is assigned only through the explicit bootstrap step above. `role`
   is the authoritative permission field going forward.
-- Zelle/Venmo reservations expire after 30 minutes; cash-pickup reservations
-  expire after 24 hours. Schedule `public.release_expired_reservations()` with
-  Supabase Cron at least every 15 minutes. Cleanup is deliberately service-only
-  and is not run inside customer checkout requests.
+- Reservation deadlines come from `business_settings` (defaults: 30 minutes
+  for electronic payments and 24 hours for cash pickup).
+- Migration `010_phase9_customer_portal.sql` enables `pg_cron` and schedules
+  `bare-release-expired-reservations` every five minutes. Do not create a
+  duplicate scheduler. Cleanup is deliberately service-only and is not run
+  inside customer checkout requests.
+- Order events enqueue `notification_outbox` records. The
+  `functions/process-notifications` Edge Function claims and delivers them
+  through Resend. Migration `011` deliberately leaves deployment secrets to
+  the production operator; migration `013` installs the audited owner action
+  that activates the schedule after those Vault secrets exist.
 
-## Next Manual Step
+## Local fixtures and tests
 
-Copy the anon public key from Supabase Project Settings > API and add it to:
+`supabase start` rebuilds the local stack and applies `seed.sql`. The seed is
+local-only and creates `customer@bare.local` / `Phase7-local-customer!` and
+`owner@bare.local` / `Phase7-local-owner!` plus one published, stocked product.
+These intentionally public fixture credentials must never be used in a hosted
+environment.
 
-- `site/.env.local` for local development
-- Vercel Project Settings > Environment Variables for production
+Run `supabase test db` for the transactional pgTAP suites. Set
+`E2E_LOCAL_FIXTURES=true` when running Playwright against the local stack to
+enable the customer, owner, cart, and checkout journeys.
+
+## Production readiness
+
+Before production, verify the reservation cron, Auth SMTP and redirects,
+owners, RLS, catalog/inventory data, backup recovery point, and a controlled
+checkout. Follow the [production launch checklist](../docs/production-launch.md)
+and [operations runbook](../docs/operations-runbook.md).

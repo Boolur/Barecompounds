@@ -28,7 +28,7 @@ export default function HelpSupportPage() {
       }
       description="Central support for contact details, business hours, local pickup, FAQ categories, shipping, returns, and ordering questions."
       features={[
-        { label: "General", body: "Contact information, business hours, and launch support details." },
+        { label: "General", body: "Contact information, business hours, and customer support details." },
         { label: "Products", body: "Product and category questions with research-use boundaries." },
         { label: "Ordering", body: "Cash, Zelle, Venmo, pickup, shipping, returns, and order tracking." },
       ]}

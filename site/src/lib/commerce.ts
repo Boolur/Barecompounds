@@ -2,6 +2,20 @@ import type { Compound } from "@/components/ui/ProductIndexRow";
 import { BEST_SELLERS, COMPOUNDS, FEATURED_COMPOUNDS } from "@/lib/compounds";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
+export type StorefrontProduct = Compound & {
+  description: string;
+  media: Array<{ url: string; alt: string }>;
+};
+
+export type CoaRecord = {
+  batchNumber: string;
+  productName: string;
+  sizeLabel: string;
+  receivedAt: string;
+  expiresAt: string | null;
+  url: string;
+};
+
 function mapProductRowToCompound(
   row: {
     id: string;
@@ -96,9 +110,110 @@ export async function getBestSellers(): Promise<Compound[]> {
   return products?.length ? products : BEST_SELLERS;
 }
 
-export async function getStorefrontProduct(slug: string): Promise<Compound | undefined> {
-  const products = await getCatalogProducts();
-  return !products?.length
-    ? COMPOUNDS.find((product) => product.slug === slug)
-    : products.find((product) => product.slug === slug);
+export async function getStorefrontProduct(slug: string): Promise<StorefrontProduct | undefined> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data: product } = await supabase
+      .from("products")
+      .select("id,category_id,slug,name,subtitle,description,molecular_weight,default_size,sort_order")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .eq("publication_status", "published")
+      .maybeSingle();
+
+    if (product) {
+      const [categoriesResult, variantsResult, availabilityResult, mediaResult] = await Promise.all([
+        product.category_id
+          ? supabase.from("product_categories").select("id,name").eq("id", product.category_id).maybeSingle()
+          : Promise.resolve({ data: null }),
+        supabase
+          .from("product_variants")
+          .select("id,product_id,price_cents,size_label,is_active,sort_order")
+          .eq("product_id", product.id)
+          .eq("is_active", true)
+          .order("sort_order"),
+        supabase.rpc("get_catalog_availability"),
+        supabase
+          .from("product_media")
+          .select("storage_path,alt_text,is_primary,sort_order")
+          .eq("product_id", product.id)
+          .order("is_primary", { ascending: false })
+          .order("sort_order"),
+      ]);
+
+      const variants = variantsResult.data ?? [];
+      const variant =
+        variants.find((item) => item.size_label === product.default_size) ?? variants[0];
+      const availability = new Map(
+        (availabilityResult.data ?? []).map((item) => [item.product_variant_id, item.in_stock]),
+      );
+      const media = (
+        await Promise.all(
+          (mediaResult.data ?? []).map(async (asset) => {
+            const { data } = await supabase.storage
+              .from("product-media")
+              .createSignedUrl(asset.storage_path, 3600);
+            return data?.signedUrl ? { url: data.signedUrl, alt: asset.alt_text } : null;
+          }),
+        )
+      ).filter((asset): asset is { url: string; alt: string } => Boolean(asset));
+
+      return {
+        slug: product.slug,
+        index: String(product.sort_order).padStart(2, "0"),
+        name: product.name,
+        subtitle: product.subtitle,
+        description: product.description || product.subtitle,
+        category: categoriesResult.data?.name ?? "Research",
+        molecularWeight: product.molecular_weight ?? "Not specified",
+        mg: variant?.size_label ?? product.default_size ?? "Size not specified",
+        tint: "var(--tint-supply)",
+        priceCents: variant?.price_cents,
+        inStock: variant ? availability.get(variant.id) ?? false : false,
+        media,
+      };
+    }
+  }
+
+  const fallback = COMPOUNDS.find((product) => product.slug === slug);
+  return fallback ? { ...fallback, description: fallback.subtitle, media: [] } : undefined;
+}
+
+export async function getPublicCoaRecords(): Promise<CoaRecord[]> {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return [];
+
+  const { data: batches, error } = await supabase.rpc("get_public_coa_records");
+  if (error || !batches?.length) return [];
+
+  const records = await Promise.all(
+    batches.map(async (batch): Promise<CoaRecord | null> => {
+      let url: string | null = null;
+      if (batch.coa_storage_path) {
+        const { data } = await supabase.storage
+          .from("coa-documents")
+          .createSignedUrl(batch.coa_storage_path, 3600);
+        url = data?.signedUrl ?? null;
+      } else if (batch.coa_url) {
+        try {
+          const parsed = new URL(batch.coa_url);
+          url = ["http:", "https:"].includes(parsed.protocol)
+            ? parsed.toString()
+            : null;
+        } catch {
+          url = null;
+        }
+      }
+      if (!url) return null;
+      return {
+        batchNumber: batch.batch_number,
+        productName: batch.product_name,
+        sizeLabel: batch.size_label,
+        receivedAt: batch.received_at,
+        expiresAt: batch.expires_at,
+        url,
+      };
+    }),
+  );
+  return records.filter((record): record is CoaRecord => record !== null);
 }

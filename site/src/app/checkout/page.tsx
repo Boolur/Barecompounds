@@ -42,17 +42,17 @@ export default async function CheckoutPage() {
       eyebrow="Checkout"
       title={
         <>
-          Pending
+          Review your
           <br />
           <span
             className="italic font-[280]"
             style={{ fontVariationSettings: '"opsz" 144, "SOFT" 80' }}
           >
-            order flow.
+            research order.
           </span>
         </>
       }
-      description="Cash, Zelle, and Venmo checkout foundation. Orders remain pending until payment is manually verified by admin."
+      description="Choose cash, Zelle, or Venmo and submit your order for payment verification and fulfillment."
     >
       <section className="container-bare pb-24 md:pb-32">
         <CheckoutForm

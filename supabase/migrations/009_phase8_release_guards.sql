@@ -2,7 +2,12 @@
 
 do $$
 begin
-  if not exists (
+  -- A clean local/CI rebuild has no identities until seed.sql runs after all
+  -- migrations. Preserve the release guard for populated projects without
+  -- making an empty database impossible to migrate.
+  if exists (
+    select 1 from public.profiles
+  ) and not exists (
     select 1
     from public.profiles
     where role = 'owner' and account_status = 'active'

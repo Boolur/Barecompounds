@@ -1,6 +1,7 @@
 "use server";
 
 import type { Json } from "@/lib/supabase/database.types";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { checkoutSchema } from "@/lib/validation/checkout";
 
@@ -78,6 +79,13 @@ export async function submitCheckout(
       message:
         parsed.error.issues[0]?.message ??
         "Please review the checkout information and try again.",
+    };
+  }
+
+  if (!(await checkRateLimit("checkout"))) {
+    return {
+      ok: false,
+      message: "Too many checkout attempts. Please try again later.",
     };
   }
 

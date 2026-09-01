@@ -1,55 +1,73 @@
 # Bare Compounds
 
-Bare Compounds is a Next.js marketing site. The deployable app lives in `site/`.
+Bare Compounds is a Next.js 16 storefront backed by Supabase. The deployable
+application is in `site/`; database migrations and operational documentation
+remain at the repository root.
 
-## Local Development
+## Repository layout
+
+- `site/` — Next.js App Router application
+- `supabase/migrations/` — ordered production schema migrations
+- `.github/workflows/` — site quality and local database rebuild checks
+- `docs/` — production launch and incident operations
+
+## Local development
+
+Node.js 22 and npm are recommended.
 
 ```bash
 cd site
-npm install
+npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000` to view the site.
+Copy the checked-in template and replace placeholders:
 
-## Production Build
+```bash
+cp .env.example .env.local
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-publishable-anon-key
+```
+
+Use a non-production Supabase project for development. Never commit environment
+files, service-role keys, database passwords, SMTP credentials, or vendor
+tokens.
+
+## Verify a change
 
 ```bash
 cd site
+npm run lint
+npm run typecheck
+npm test
 npm run build
-npm run start
+npm run test:e2e
 ```
 
-## GitHub
+CI runs those checked-in scripts. A separate Supabase workflow starts the local
+stack, rebuilds the database from every migration, and runs the pgTAP files in
+`supabase/tests/`; it requires Docker on its runner.
 
-Use this repository as the project remote:
+## Deployment
 
-```bash
-git remote add origin https://github.com/Boolur/Barecompounds.git
-```
+Import the repository into Vercel and configure:
 
-The repository root contains the `site/` app. Configure deployment tools to use `site` as the application root.
-
-## Vercel Deployment
-
-Create a Vercel project from `https://github.com/Boolur/Barecompounds.git` with these settings:
-
-- Framework preset: `Next.js`
+- Framework preset: Next.js
 - Root directory: `site`
-- Install command: `npm install`
+- Install command: `npm ci`
 - Build command: `npm run build`
-- Output directory: leave as the Vercel default for Next.js
+- Output directory: Vercel's Next.js default
 
-No `vercel.json` is required for the current setup because Vercel supports setting `site` as the project root in the dashboard.
-Once connected, Vercel should create a new deployment for each push to the `main` branch.
+Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` separately
+for Production and Preview; previews should not connect to production data.
+Deploy reviewed changes from `main` only after both GitHub workflows pass.
 
-## Supabase Environment
+No `vercel.json` is required for the current dashboard-based root-directory
+configuration.
 
-Create a Supabase project, then add these variables in Vercel under Project Settings > Environment Variables:
+## Operations
 
-```bash
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-```
-
-Keep real values out of Git. Use `site/.env.local` for local development and copy the placeholders from `site/.env.example`.
+- [Production launch checklist](docs/production-launch.md)
+- [Rollback, restore, recovery, email, vendors, cron, and incident runbook](docs/operations-runbook.md)
+- [Application-specific setup](site/README.md)
+- [Supabase schema and bootstrap](supabase/README.md)

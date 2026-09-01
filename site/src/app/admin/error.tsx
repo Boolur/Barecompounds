@@ -1,13 +1,20 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
+import { useEffect } from "react";
 import Button from "@/components/ui/Button";
 
 export default function AdminError({
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
+
   return (
     <div id="main-content" className="flex min-h-[70vh] items-center justify-center p-5">
       <section role="alert" className="max-w-xl border border-[#8e4a43]/30 bg-[#f1dedb] p-8">

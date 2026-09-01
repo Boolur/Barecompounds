@@ -1,6 +1,7 @@
 "use server";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { affiliateInquirySchema } from "@/lib/validation/affiliate";
 
 export type AffiliateInquiryState = {
@@ -27,6 +28,13 @@ export async function submitAffiliateInquiry(
     return {
       ok: false,
       message: parsed.error.issues[0]?.message ?? "Review the inquiry fields.",
+    };
+  }
+
+  if (!(await checkRateLimit("affiliate"))) {
+    return {
+      ok: false,
+      message: "Too many recent inquiries. Please try again later.",
     };
   }
 
