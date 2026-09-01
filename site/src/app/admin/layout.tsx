@@ -27,11 +27,11 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role,account_status")
     .eq("id", user.id)
     .single();
 
-  if (!profile || !STAFF_ROLES.includes(profile.role)) {
+  if (!profile || profile.account_status !== "active" || !STAFF_ROLES.includes(profile.role)) {
     redirect("/account?reason=forbidden");
   }
 

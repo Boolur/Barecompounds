@@ -59,14 +59,14 @@ export async function proxy(request: NextRequest) {
     return redirectWithCookies(url, response);
   }
 
-  if (user && adminRoute) {
+  if (user && (adminRoute || accountSubroute)) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role,account_status")
       .eq("id", user.id)
       .single();
 
-    if (!profile || !STAFF_ROLES.has(profile.role)) {
+    if (adminRoute && (!profile || profile.account_status !== "active" || !STAFF_ROLES.has(profile.role))) {
       const url = request.nextUrl.clone();
       url.pathname = "/account";
       url.search = "";

@@ -11,6 +11,9 @@ export const checkoutSchema = z
     customerEmail: z.email().max(320).transform((email) => email.toLowerCase()),
     customerPhone: z.string().trim().max(40),
     storeLocationId: z.uuid(),
+    shippingAddressId: z
+      .union([z.literal(""), z.uuid()])
+      .transform((value) => value || null),
     idempotencyKey: z.uuid(),
     fulfillmentMethod: z.enum(["shipping", "local_pickup"]),
     paymentMethod: z.enum(["cash", "zelle", "venmo"]),
@@ -26,6 +29,14 @@ export const checkoutSchema = z
     {
       message: "Cash is available for local pickup only.",
       path: ["paymentMethod"],
+    }
+  )
+  .refine(
+    ({ fulfillmentMethod, shippingAddressId }) =>
+      fulfillmentMethod !== "shipping" || Boolean(shippingAddressId),
+    {
+      message: "Select a saved shipping address.",
+      path: ["shippingAddressId"],
     }
   );
 

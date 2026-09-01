@@ -1,4 +1,5 @@
 import MarqueeTicker from "@/components/ui/MarqueeTicker";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const PROMO_ITEMS = [
   { text: "Free local pickup available" },
@@ -11,10 +12,20 @@ const PROMO_ITEMS = [
   { text: "Government ID required for pickup" },
 ];
 
-export default function PromoBar() {
+export default async function PromoBar() {
+  const supabase = await createServerSupabaseClient();
+  const { data } = supabase
+    ? await supabase.rpc("get_public_business_settings")
+    : { data: null };
+  const settings = data?.[0];
+  const items =
+    settings?.announcement_active && settings.storefront_announcement
+      ? [{ text: settings.storefront_announcement, tone: "accent" as const }, ...PROMO_ITEMS]
+      : PROMO_ITEMS;
+
   return (
     <MarqueeTicker
-      items={PROMO_ITEMS}
+      items={items}
       speed={55}
       className="sticky top-0 z-50 flex h-9 items-center"
     />

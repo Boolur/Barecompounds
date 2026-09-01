@@ -26,6 +26,7 @@ type CartContextValue = {
   itemCount: number;
   subtotalCents: number;
   addItem: (compound: Compound) => void;
+  addItems: (items: CartItem[]) => void;
   updateQuantity: (slug: string, quantity: number) => void;
   removeItem: (slug: string) => void;
   clearCart: () => void;
@@ -81,6 +82,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const addItems = useCallback((incoming: CartItem[]) => {
+    setItems((current) => {
+      const merged = new Map(current.map((item) => [item.slug, item]));
+      for (const item of incoming) {
+        const existing = merged.get(item.slug);
+        merged.set(item.slug, {
+          ...item,
+          quantity: Math.min(99, item.quantity + (existing?.quantity ?? 0)),
+        });
+      }
+      return Array.from(merged.values());
+    });
+  }, []);
+
   const updateQuantity = useCallback((slug: string, quantity: number) => {
     setItems((current) =>
       current
@@ -113,11 +128,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       itemCount,
       subtotalCents,
       addItem,
+      addItems,
       updateQuantity,
       removeItem,
       clearCart,
     };
-  }, [addItem, clearCart, items, removeItem, updateQuantity]);
+  }, [addItem, addItems, clearCart, items, removeItem, updateQuantity]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

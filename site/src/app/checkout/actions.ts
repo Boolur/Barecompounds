@@ -9,6 +9,7 @@ export type CheckoutState = {
   message: string;
   orderNumber?: string;
   totalCents?: number;
+  trackingToken?: string;
 };
 
 function value(formData: FormData, key: string) {
@@ -27,6 +28,7 @@ function publicCheckoutError(message: string | undefined) {
   if (!message) return "The order could not be completed. Please try again.";
   const safeMessages = [
     "Authentication is required.",
+    "An active customer account is required.",
     "A checkout request identifier is required.",
     "A valid customer name and email are required.",
     "Research disclaimer, terms, and age verification are required.",
@@ -37,6 +39,9 @@ function publicCheckoutError(message: string | undefined) {
     "A product quantity cannot exceed 99 units.",
     "A selected product is unavailable.",
     "Select an active fulfillment location.",
+    "Select a saved shipping address.",
+    "Shipping address not found.",
+    "Checkout retry does not match the original shipping address.",
     "Too many pending orders. Complete or cancel an existing order first.",
     "Inventory changed while checkout was processing. Please try again.",
   ];
@@ -55,6 +60,7 @@ export async function submitCheckout(
     customerEmail: value(formData, "customerEmail"),
     customerPhone: value(formData, "customerPhone"),
     storeLocationId: value(formData, "storeLocationId"),
+    shippingAddressId: value(formData, "shippingAddressId"),
     idempotencyKey: value(formData, "idempotencyKey"),
     fulfillmentMethod: value(formData, "fulfillmentMethod"),
     paymentMethod: value(formData, "paymentMethod"),
@@ -94,11 +100,12 @@ export async function submitCheckout(
   }
 
   const input = parsed.data;
-  const { data, error } = await supabase.rpc("submit_checkout", {
+  const { data, error } = await supabase.rpc("submit_checkout_v2", {
     p_customer_name: input.customerName,
     p_customer_email: input.customerEmail,
     p_customer_phone: input.customerPhone,
     p_store_location_id: input.storeLocationId,
+    p_shipping_address_id: input.shippingAddressId,
     p_idempotency_key: input.idempotencyKey,
     p_fulfillment_method: input.fulfillmentMethod,
     p_payment_method: input.paymentMethod,
@@ -126,6 +133,7 @@ export async function submitCheckout(
     ok: true,
     orderNumber: order.order_number,
     totalCents: order.total_cents,
+    trackingToken: order.tracking_token ?? undefined,
     message:
       "Order submitted. Payment must be manually verified before fulfillment.",
   };

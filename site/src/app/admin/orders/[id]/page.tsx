@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import {
   FulfillmentPanel,
   PaymentPanel,
+  RejectPaymentSubmissionPanel,
 } from "@/components/admin/OrderActionPanels";
 import { getAdminOrderDetail } from "@/lib/orders";
 
@@ -31,6 +32,7 @@ export default async function AdminOrderDetailPage({
     order,
     items,
     payments,
+    paymentSubmissions,
     events,
     shipping,
     pickup,
@@ -39,6 +41,9 @@ export default async function AdminOrderDetailPage({
     role,
   } = detail;
   const payment = payments[0];
+  const customerReference = paymentSubmissions.find(
+    (submission) => submission.status === "pending",
+  );
   const canManagePayment = role === "owner" || role === "admin";
   const canManageFulfillment = canManagePayment || role === "fulfillment";
 
@@ -66,7 +71,7 @@ export default async function AdminOrderDetailPage({
             <section role="alert" className="border border-[#a87827]/30 bg-[#f1e4c8] p-5">
               <p className="eyebrow">Manual review required</p>
               <p className="mt-2 text-sm text-smoke">
-                The received payment amount differs from the order total. Resolve the discrepancy before fulfillment.
+                Payment evidence or order details require review before fulfillment.
               </p>
             </section>
           ) : null}
@@ -135,6 +140,38 @@ export default async function AdminOrderDetailPage({
             </div>
           </section>
 
+          {paymentSubmissions.length ? (
+            <section className="border border-[var(--bare-rule)] bg-paper p-6">
+              <p className="eyebrow">Customer payment references</p>
+              <ul className="mt-5 divide-y divide-[var(--bare-rule)]">
+                {paymentSubmissions.map((submission) => (
+                  <li key={submission.id} className="grid gap-2 py-4 sm:grid-cols-[1fr_auto]">
+                    <div>
+                      <p className="font-mono text-sm">{submission.reference}</p>
+                      {submission.note ? (
+                        <p className="mt-2 text-sm text-smoke">{submission.note}</p>
+                      ) : null}
+                    </div>
+                    <div className="text-right">
+                      <StatusBadge status={submission.status} />
+                      <p className="caption mt-2">
+                        {dateTime.format(new Date(submission.created_at))} UTC
+                      </p>
+                    </div>
+                    {canManagePayment && submission.status === "pending" ? (
+                      <div className="sm:col-span-2">
+                        <RejectPaymentSubmissionPanel
+                          submissionId={submission.id}
+                          orderId={order.id}
+                        />
+                      </div>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           <section>
             <p className="eyebrow">Customer-visible timeline</p>
             <h2 className="display-s mt-2">Status history</h2>
@@ -181,7 +218,7 @@ export default async function AdminOrderDetailPage({
                   orderId={order.id}
                   currentStatus={order.payment_status}
                   totalCents={order.total_cents}
-                  reference={payment?.transaction_reference}
+                  reference={customerReference?.reference ?? payment?.transaction_reference}
                 />
               ) : (
                 <p className="text-sm text-smoke">Your role has read-only payment access.</p>

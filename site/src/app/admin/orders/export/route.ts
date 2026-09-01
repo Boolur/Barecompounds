@@ -12,7 +12,7 @@ const FULFILLMENT = new Set<FulfillmentStatus>([
 
 function csvCell(value: string | number | null) {
   let text = String(value ?? "");
-  if (/^[=+\-@]/.test(text)) text = `'${text}`;
+  if (/^[\s\u0000-\u001f\u007f]*[=+\-@]/.test(text)) text = `'${text}`;
   return `"${text.replaceAll('"', '""')}"`;
 }
 
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   const { data: role } = await supabase.rpc("current_app_role");
-  if (!user || !role || role === "customer") {
+  if (!user || !role || !["owner", "admin"].includes(role)) {
     return new Response("Forbidden", { status: 403 });
   }
 
@@ -36,6 +36,7 @@ export async function GET(request: Request) {
     .replace(/[^\w@.\-\s]/g, "")
     .slice(0, 120);
   const exported: Array<{
+    id: string;
     order_number: string;
     customer_name: string;
     customer_email: string;
@@ -48,16 +49,22 @@ export async function GET(request: Request) {
     created_at: string;
   }> = [];
   const batchSize = 1_000;
-  const maximumRows = 100_000;
+  const maximumRows = 10_000;
   const exportStartedAt = new Date().toISOString();
-  for (let offset = 0; offset < maximumRows; offset += batchSize) {
+  let cursor: { createdAt: string; id: string } | null = null;
+  for (let fetched = 0; fetched < maximumRows; fetched += batchSize) {
     let query = supabase
       .from("orders")
-      .select("order_number,customer_name,customer_email,customer_phone,total_cents,payment_method,payment_status,fulfillment_method,fulfillment_status,created_at")
+      .select("id,order_number,customer_name,customer_email,customer_phone,total_cents,payment_method,payment_status,fulfillment_method,fulfillment_status,created_at")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .lte("created_at", exportStartedAt)
-      .range(offset, offset + batchSize - 1);
+      .limit(batchSize);
+    if (cursor) {
+      query = query.or(
+        `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`
+      );
+    }
     if (search) {
       query = query.or(`order_number.ilike.%${search}%,customer_email.ilike.%${search}%,customer_name.ilike.%${search}%`);
     }
@@ -69,9 +76,11 @@ export async function GET(request: Request) {
     if (error) return new Response("Export failed", { status: 500 });
     exported.push(...(data ?? []));
     if (!data || data.length < batchSize) break;
+    const last = data[data.length - 1];
+    cursor = { createdAt: last.created_at, id: last.id };
     if (exported.length >= maximumRows) {
       return new Response(
-        "Export exceeds 100,000 rows. Narrow the status or search filters.",
+        "Export exceeds 10,000 rows. Narrow the status or search filters.",
         { status: 413 }
       );
     }
@@ -95,6 +104,12 @@ export async function GET(request: Request) {
       order.created_at,
     ].map(csvCell).join(",")
   );
+  const { error: auditError } = await supabase.rpc("admin_record_export", {
+    p_report: "orders",
+    p_row_count: exported.length,
+    p_snapshot: exportStartedAt,
+  });
+  if (auditError) return new Response("The export could not be audited.", { status: 500 });
   return new Response([header, ...rows].join("\r\n"), {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",

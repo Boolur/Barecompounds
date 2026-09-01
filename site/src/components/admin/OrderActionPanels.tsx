@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import {
+  rejectPaymentSubmission,
   updateFulfillment,
   updatePayment,
   type OrderActionState,
@@ -22,6 +23,64 @@ const NEXT_PAYMENT: Record<PaymentStatus, PaymentStatus[]> = {
   refunded: [],
   cancelled: [],
 };
+
+export function RejectPaymentSubmissionPanel({
+  submissionId,
+  orderId,
+}: {
+  submissionId: string;
+  orderId: string;
+}) {
+  const [state, action, pending] = useActionState(
+    rejectPaymentSubmission,
+    INITIAL,
+  );
+  return (
+    <form action={action} className="mt-4 grid gap-3 border-t border-[var(--bare-rule)] pt-4">
+      <input type="hidden" name="submissionId" value={submissionId} />
+      <input type="hidden" name="orderId" value={orderId} />
+      <Field
+        label="Customer correction message"
+        htmlFor={`submission-message-${submissionId}`}
+      >
+        <textarea
+          id={`submission-message-${submissionId}`}
+          name="customerMessage"
+          rows={2}
+          maxLength={500}
+          placeholder="We could not match this reference. Please verify and resubmit."
+          className={fieldControlClass}
+        />
+      </Field>
+      <Field
+        label="Internal rejection reason"
+        htmlFor={`submission-reason-${submissionId}`}
+        required
+      >
+        <textarea
+          id={`submission-reason-${submissionId}`}
+          name="reason"
+          rows={2}
+          minLength={3}
+          maxLength={1000}
+          required
+          className={fieldControlClass}
+        />
+      </Field>
+      <button
+        disabled={pending}
+        className="nav-link justify-self-start text-red-900 disabled:opacity-50"
+      >
+        {pending ? "Rejecting…" : "Reject reference"}
+      </button>
+      {state.message ? (
+        <p role={state.ok ? "status" : "alert"} className="text-sm text-smoke">
+          {state.message}
+        </p>
+      ) : null}
+    </form>
+  );
+}
 
 export function PaymentPanel({
   orderId,

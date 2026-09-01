@@ -4,7 +4,7 @@ import AccountAuth from "./AccountAuth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { AccountPortalShell } from "@/components/account/AccountPortalShell";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { EmptyState, InlineAlert } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export const metadata = { title: "Account" };
@@ -21,12 +21,35 @@ export default async function AccountPage({
   } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
 
   if (user && supabase) {
-    const { data: orders } = await supabase
-      .from("orders")
-      .select("id,order_number,payment_status,fulfillment_status,total_cents,created_at")
-      .eq("profile_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(5);
+    const [
+      { data: orders },
+      { data: profile },
+      { count: orderCount },
+      { count: awaitingPaymentCount },
+      { count: fulfillmentCount },
+    ] = await Promise.all([
+      supabase
+        .from("orders")
+        .select("id,order_number,payment_status,fulfillment_status,total_cents,created_at")
+        .eq("profile_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase.from("profiles").select("account_status").eq("id", user.id).single(),
+      supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("profile_id", user.id),
+      supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("profile_id", user.id)
+        .eq("payment_status", "pending_payment"),
+      supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("profile_id", user.id)
+        .not("fulfillment_status", "in", "(completed,cancelled)"),
+    ]);
     return (
       <AccountPortalShell email={user.email ?? "Customer account"}>
         <PageHeader
@@ -36,11 +59,16 @@ export default async function AccountPage({
           actions={<Link href="/shop" className="nav-link rounded-full bg-ink px-5 py-3 text-cream">Shop products</Link>}
         />
         <div className="space-y-8 p-5 md:p-8">
+          {profile?.account_status === "suspended" ? (
+            <InlineAlert tone="critical" title="Account suspended">
+              Ordering and account changes are disabled. Contact support for assistance.
+            </InlineAlert>
+          ) : null}
           <div className="grid grid-cols-1 gap-px border border-[var(--bare-rule)] bg-[var(--bare-rule)] sm:grid-cols-3">
             {[
-              ["Orders", orders?.length ?? 0],
-              ["Awaiting payment", orders?.filter((order) => order.payment_status === "pending_payment").length ?? 0],
-              ["In fulfillment", orders?.filter((order) => !["completed", "cancelled"].includes(order.fulfillment_status)).length ?? 0],
+              ["Orders", orderCount ?? 0],
+              ["Awaiting payment", awaitingPaymentCount ?? 0],
+              ["In fulfillment", fulfillmentCount ?? 0],
             ].map(([label, value]) => (
               <article key={label} className="bg-paper p-6">
                 <p className="eyebrow">{label}</p>
@@ -59,7 +87,8 @@ export default async function AccountPage({
             {orders?.length ? (
               <ul className="divide-y divide-[var(--bare-rule)] border border-[var(--bare-rule)] bg-paper">
                 {orders.map((order) => (
-                  <li key={order.id} className="grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <li key={order.id}>
+                    <Link href={`/account/orders/${order.id}`} className="grid gap-4 p-5 transition-colors hover:bg-cream sm:grid-cols-[1fr_auto] sm:items-center">
                     <div>
                       <p className="font-mono text-sm">{order.order_number}</p>
                       <p className="caption mt-2">
@@ -70,6 +99,7 @@ export default async function AccountPage({
                       <StatusBadge status={order.payment_status} />
                       <StatusBadge status={order.fulfillment_status} />
                     </div>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -89,8 +119,12 @@ export default async function AccountPage({
   const requiresLoginForCart = params.reason === "cart";
   const requiresAuthentication = params.reason === "auth";
   const accessDenied = params.reason === "forbidden";
+  const safeRedirect =
+    params.next?.startsWith("/") &&
+    !params.next.startsWith("//") &&
+    !/[\\\u0000-\u001f\u007f]/.test(params.next);
   const redirectTo =
-    params.next?.startsWith("/") && !params.next.startsWith("//")
+    safeRedirect
       ? params.next
       : undefined;
 

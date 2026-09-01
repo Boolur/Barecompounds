@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
-import type { Database } from "@/lib/supabase/database.types";
 
 type Mode = "sign-in" | "sign-up";
-type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
+type OrderRow = {
+  id: string;
+  order_number: string;
+  payment_status: string;
+  fulfillment_status: string;
+};
 
 function AuthModeToggle({
   mode,
@@ -42,7 +46,13 @@ function AuthModeToggle({
   );
 }
 
-export default function AccountAuth({ redirectTo }: { redirectTo?: string }) {
+export default function AccountAuth({
+  redirectTo,
+  inviteToken,
+}: {
+  redirectTo?: string;
+  inviteToken?: string;
+}) {
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,6 +61,7 @@ export default function AccountAuth({ redirectTo }: { redirectTo?: string }) {
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
+  const invitationAttempted = useRef(false);
 
   useEffect(() => {
     if (!supabase) return;
@@ -71,11 +82,27 @@ export default function AccountAuth({ redirectTo }: { redirectTo?: string }) {
 
     supabase
       .from("orders")
-      .select("*")
+      .select("id,order_number,payment_status,fulfillment_status")
       .eq("profile_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => setOrders(data ?? []));
   }, [supabase, user]);
+
+  useEffect(() => {
+    if (!supabase || !user || !inviteToken || invitationAttempted.current) return;
+    invitationAttempted.current = true;
+    setPending(true);
+    setMessage("Accepting your staff invitation…");
+    supabase.rpc("claim_staff_invitation", { p_token: inviteToken }).then(({ error }) => {
+      setPending(false);
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+      window.history.replaceState(null, "", "/account");
+      window.location.assign("/admin");
+    });
+  }, [inviteToken, supabase, user]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -100,6 +127,11 @@ export default function AccountAuth({ redirectTo }: { redirectTo?: string }) {
     }
 
     if (mode === "sign-in" && result.data.session) {
+      if (inviteToken) {
+        setUser(result.data.user);
+        setMessage("Accepting your staff invitation…");
+        return;
+      }
       window.location.assign(redirectTo ?? "/account");
       return;
     }
@@ -118,6 +150,42 @@ export default function AccountAuth({ redirectTo }: { redirectTo?: string }) {
     setMessage("Signed out.");
   }
 
+  async function handlePasswordRecovery() {
+    if (!supabase || !email.trim()) {
+      setMessage("Enter your account email first.");
+      return;
+    }
+    setPending(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setPending(false);
+    setMessage(
+      error
+        ? error.message
+        : "If the account exists, a password recovery email is on its way.",
+    );
+  }
+
+  async function handleConfirmationResend() {
+    if (!supabase || !email.trim()) {
+      setMessage("Enter the signup email first.");
+      return;
+    }
+    setPending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: { emailRedirectTo: `${window.location.origin}/account` },
+    });
+    setPending(false);
+    setMessage(
+      error
+        ? error.message
+        : "If confirmation is pending, a new verification email is on its way.",
+    );
+  }
+
   if (user) {
     return (
       <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
@@ -128,6 +196,7 @@ export default function AccountAuth({ redirectTo }: { redirectTo?: string }) {
             Researcher profile, saved addresses, order history, and quick
             reorder attach to this Supabase account as the backend matures.
           </p>
+          {message ? <p className="caption mt-6 text-ink">{message}</p> : null}
           <button
             type="button"
             onClick={handleSignOut}
@@ -233,6 +302,27 @@ export default function AccountAuth({ redirectTo }: { redirectTo?: string }) {
         >
           {pending ? "Working..." : mode === "sign-in" ? "Sign in" : "Create account"}
         </button>
+        <div className="mt-5 flex flex-wrap gap-5">
+          {mode === "sign-in" ? (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={handlePasswordRecovery}
+              className="nav-link disabled:opacity-50"
+            >
+              Reset password
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={handleConfirmationResend}
+              className="nav-link disabled:opacity-50"
+            >
+              Resend confirmation
+            </button>
+          )}
+        </div>
         {message ? <p className="caption mt-6 text-ink">{message}</p> : null}
       </form>
 

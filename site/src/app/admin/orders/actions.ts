@@ -40,6 +40,12 @@ const fulfillmentSchema = z.object({
   customerMessage: z.string().trim().max(500),
   note: z.string().trim().min(3).max(1_000),
 });
+const rejectPaymentSubmissionSchema = z.object({
+  submissionId: z.uuid(),
+  orderId: z.uuid(),
+  customerMessage: z.string().trim().max(500),
+  reason: z.string().trim().min(3).max(1_000),
+});
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "");
@@ -104,6 +110,35 @@ export async function updatePayment(
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${parsed.data.orderId}`);
   return { ok: true, message: "Payment status updated and recorded in the audit trail." };
+}
+
+export async function rejectPaymentSubmission(
+  _state: OrderActionState,
+  formData: FormData,
+): Promise<OrderActionState> {
+  const parsed = rejectPaymentSubmissionSchema.safeParse({
+    submissionId: value(formData, "submissionId"),
+    orderId: value(formData, "orderId"),
+    customerMessage: value(formData, "customerMessage"),
+    reason: value(formData, "reason"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Review the rejection fields.",
+    };
+  }
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return { ok: false, message: "Order operations are unavailable." };
+  const { error } = await supabase.rpc("admin_reject_payment_submission", {
+    p_submission_id: parsed.data.submissionId,
+    p_customer_message: parsed.data.customerMessage,
+    p_reason: parsed.data.reason,
+  });
+  if (error) return { ok: false, message: publicActionError(error.message) };
+  revalidatePath(`/admin/orders/${parsed.data.orderId}`);
+  revalidatePath(`/account/orders/${parsed.data.orderId}`);
+  return { ok: true, message: "Payment reference rejected for correction." };
 }
 
 export async function updateFulfillment(

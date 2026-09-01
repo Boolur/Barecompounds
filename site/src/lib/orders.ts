@@ -17,6 +17,8 @@ export type PickupRow =
 export type AuditRow = Database["public"]["Tables"]["audit_logs"]["Row"];
 export type LocationRow =
   Database["public"]["Tables"]["inventory_locations"]["Row"];
+export type CustomerPaymentSubmissionRow =
+  Database["public"]["Tables"]["customer_payment_submissions"]["Row"];
 
 const PAGE_SIZE = 20;
 
@@ -70,7 +72,7 @@ export async function getAdminOrderDetail(orderId: string) {
   const supabase = await createServerSupabaseClient();
   if (!supabase) return null;
 
-  const [order, items, payments, events, shipping, pickup, audit, locations, role] =
+  const [order, items, payments, submissions, events, shipping, pickup, audit, locations, role] =
     await Promise.all([
       supabase.from("orders").select("*").eq("id", orderId).single(),
       supabase
@@ -80,6 +82,11 @@ export async function getAdminOrderDetail(orderId: string) {
         .order("created_at"),
       supabase
         .from("payments")
+        .select("*")
+        .eq("order_id", orderId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("customer_payment_submissions")
         .select("*")
         .eq("order_id", orderId)
         .order("created_at", { ascending: false }),
@@ -117,6 +124,7 @@ export async function getAdminOrderDetail(orderId: string) {
     order: order.data,
     items: items.data ?? [],
     payments: payments.data ?? [],
+    paymentSubmissions: submissions.data ?? [],
     events: events.data ?? [],
     shipping: shipping.data,
     pickup: pickup.data,
